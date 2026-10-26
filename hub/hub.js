@@ -87,15 +87,18 @@ function onboarding({ kv, sink }) {
             button('Next', () => { step = 2; show(); }, 'contained')]));
       } else {
         render(main, stepCard('Let your phone reach this computer',
-          `Phones connect to this computer on TCP port ${PORT}. If a firewall is enabled, allow that port once:`,
-          [h('p', { class: 'subtitle-2', text: 'Ubuntu / Debian / Mint (ufw)' }),
-            codeBlock(`sudo ufw allow ${PORT}/tcp`),
-            h('p', { class: 'subtitle-2', text: 'Fedora / RHEL / openSUSE (firewalld)' }),
-            codeBlock(`sudo firewall-cmd --add-port=${PORT}/tcp --permanent && sudo firewall-cmd --reload`),
-            h('p', { text: 'No firewall, or not sure? Skip this – you can come back to it if your phone can’t connect.' })],
+          `Phones connect to this computer on TCP port ${PORT}. Debian 13 has no firewall rules by default – check with:`,
+          [codeBlock('sudo nft list ruleset'),
+            h('p', { text: 'Empty output means nothing blocks the port: skip this step. Otherwise allow the port once:' }),
+            h('p', { class: 'subtitle-2', text: 'nftables (Debian’s default)' }),
+            codeBlock(`sudo nft insert rule inet filter input tcp dport ${PORT} accept`),
+            h('p', { class: 'subtitle-2', text: 'iptables' }),
+            codeBlock(`sudo iptables -I INPUT -p tcp --dport ${PORT} -j ACCEPT && sudo ip6tables -I INPUT -p tcp --dport ${PORT} -j ACCEPT`),
+            h('p', { text: `These last until reboot. To keep it, add “tcp dport ${PORT} accept” to the input chain in /etc/nftables.conf.` })],
           [button('Back', () => { step = 1; show(); }),
             button('Finish', async () => {
-              try { if (globalThis.Notification?.permission === 'default') await Notification.requestPermission(); } catch { /* ignore */ }
+              // Ask for notifications but don't wait: an unanswered prompt must not block setup.
+              if (globalThis.Notification?.permission === 'default') Notification.requestPermission().catch(() => {});
               await kv.put('hubName', name);
               await kv.put('onboarded', true);
               resolve();
@@ -578,5 +581,28 @@ function fatal(e) {
       button('Reload', () => location.reload()))));
 }
 
+// Only one window may run the server (and own the pairing codes). Extra windows
+// wait for the lock and take over if the active window closes.
+function renderAlreadyOpen() {
+  render(app, appBar(), h('main', { class: 'content' },
+    h('div', { class: 'banner' }, icon('info'),
+      h('div', { class: 'grow' },
+        h('p', { text: 'i6-share Hub is already running in another window.' }),
+        h('p', { text: 'Use that window. This one takes over automatically if the other one is closed.' })))));
+}
+
+async function boot() {
+  if (!navigator.locks) return main();
+  await navigator.locks.request('i6-share-hub', { ifAvailable: true }, async (lock) => {
+    if (!lock) {
+      renderAlreadyOpen();
+      navigator.locks.request('i6-share-hub', () => location.reload());
+      return;
+    }
+    await main();
+    await new Promise(() => {}); // hold the lock for as long as this window lives
+  });
+}
+
 if (typeof globalThis.TCPServerSocket === 'undefined') renderNotIwa();
-else main().catch(fatal);
+else boot().catch(fatal);

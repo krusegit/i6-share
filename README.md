@@ -53,22 +53,34 @@ The first time, Chrome asks to let i6-share **access devices on your local netwo
 Follow the step-by-step guide at **[`/setup/`](https://krusegit.github.io/i6-share/setup/)**.
 It checks your browser and includes a "Test connection" button. In short:
 
-1. Use **Google Chrome or Chromium ≥ 120** (current versions recommended).
+Target platform: **Debian 13 (trixie)** with **Google Chrome**.
+
+1. Install Google Chrome (tested with 151 on Debian 13; Debian's own `chromium` 156 package
+   could not install signed IWAs in our tests):
+   ```sh
+   wget -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+   sudo apt install -y /tmp/google-chrome.deb
+   ```
 2. Enable `chrome://flags/#enable-isolated-web-apps` and
    `chrome://flags/#enable-isolated-web-app-dev-mode`, then relaunch.
 3. Download [`hub/i6-share-hub.swbn`](https://krusegit.github.io/i6-share/hub/i6-share-hub.swbn).
-4. Install it:
-   * **Chrome 154+:** `chrome://iwa-dev` → **Install** → **Signed Bundle** → pick the file.
-   * **Chrome 120–153:** `chrome://web-app-internals` → *Isolated Web Apps* →
-     **Install IWA from Signed Web Bundle**.
-   * **Command line** (quit Chrome first):
-     ```sh
-     google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode \
-       --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"
-     ```
-     (`chromium` or `chromium-browser` works the same way.)
-5. If you run a firewall, open the port: `sudo ufw allow 47616/tcp`, or
-   `sudo firewall-cmd --add-port=47616/tcp --permanent && sudo firewall-cmd --reload`.
+4. Quit Chrome completely, then install it from the command line (tested):
+   ```sh
+   google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode \
+     --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"
+   ```
+   Alternatives: `chrome://iwa-dev` (Chrome 154+) or `chrome://web-app-internals`
+   (Chrome 120–153) → install from signed web bundle or from the update manifest
+   `https://krusegit.github.io/i6-share/hub/update.json`.
+5. Firewall: a fresh Debian 13 has no rules (`sudo nft list ruleset` prints nothing) — then skip
+   this. Otherwise allow TCP 47616:
+   ```sh
+   sudo nft insert rule inet filter input tcp dport 47616 accept          # nftables (Debian default)
+   sudo iptables -I INPUT -p tcp --dport 47616 -j ACCEPT                   # or iptables
+   sudo ip6tables -I INPUT -p tcp --dport 47616 -j ACCEPT
+   ```
+   To persist with nftables, add `tcp dport 47616 accept` to `chain input` in
+   `/etc/nftables.conf` and `sudo systemctl enable --now nftables`.
 6. Launch **i6-share Hub** from your app launcher (or `chrome://apps`) and pick a save folder.
    The hub only receives while its window is open (minimised is fine).
 

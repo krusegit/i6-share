@@ -6,7 +6,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "theme_color": "#6200ee",
   "background_color": "#fafafa",
   "icons": [
@@ -25,9 +25,6 @@
   ],
   "permissions_policy": {
     "direct-sockets": [
-      "self"
-    ],
-    "direct-sockets-private": [
       "self"
     ],
     "local-network": [
