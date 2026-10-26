@@ -9,7 +9,7 @@
 
 import { store } from './lib/store.js';
 
-const VERSION = '1.0.1';   // keep in sync with APP_VERSION in client.js; bump to refresh caches
+const VERSION = '1.0.2';   // keep in sync with APP_VERSION in client.js; bump to refresh caches
 const CACHE = `i6-share-${VERSION}`;
 const SHELL = [
   './', './index.html', './app.js', './app.css', './client.js', './style.css',
@@ -60,7 +60,9 @@ async function staleWhileRevalidate(event, req) {
   // Navigations (./?share=1, ./#pair=…) all map to the same cached document.
   const key = nav ? new URL(req.url).href.split(/[?#]/)[0] : req;
   const cached = await cache.match(key, { ignoreSearch: nav });
-  const network = fetch(req).then(async (res) => {
+  // no-cache: revalidate with the server instead of GitHub Pages' 10-minute HTTP cache,
+  // so a new deploy shows up on the next launch.
+  const network = fetch(req, { cache: 'no-cache' }).then(async (res) => {
     if (res.ok && res.type === 'basic') await cache.put(key, res.clone());
     return res;
   });
