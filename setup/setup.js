@@ -163,45 +163,40 @@ const STEPS = [
           h('a', { class: 'btn btn--contained', href: BUNDLE_URL, attrs: { download: 'i6-share-hub.swbn' } },
             icon('download'), h('span', { text: 'Download hub' })),
           meta),
-        p('Save it in your ', strong('Downloads'), ' folder. The next step expects it there.'),
+        p('Only needed for the command-line install in the next step – the recommended install fetches it by itself. If you download it, save it in your ', strong('Downloads'), ' folder.'),
       ];
     },
   },
   {
     title: 'Install it',
-    caption: 'From Chrome\'s Isolated Web App page',
+    caption: 'From the update manifest, so Chrome keeps it up to date',
     body: () => {
       const iwaDev = [
-        p(strong(`Chrome ${IWA_DEV_PAGE} and newer:`), ' open'),
-        codeBlock('chrome://iwa-dev'),
-        ol(
-          ['Click ', strong('Install'), ' and choose the ', strong('Signed Bundle'), ' tab.'],
-          ['Click ', strong('Install'), ' and pick ', h('code', { text: 'i6-share-hub.swbn' }), ' from Downloads.'],
-          ['Confirm. "i6-share Hub" now appears in the list and in your app launcher.'],
-        ),
+        p(strong(`Chrome ${IWA_DEV_PAGE} and newer:`), ' open ', h('code', { text: 'chrome://iwa-dev' }),
+          ', click ', strong('Install'), ', choose the ', strong('Update Manifest'), ' tab, paste the address above, click ',
+          strong('Fetch'), ', then ', strong('Install'), '.'),
       ];
       const internals = [
-        p(strong(`Chrome ${MIN_CHROME}–${IWA_DEV_PAGE - 1}:`), ' open'),
-        codeBlock('chrome://web-app-internals'),
-        ol(
-          ['Find the ', strong('Isolated Web Apps'), ' section.'],
-          ['Next to ', strong('Install IWA from Signed Web Bundle'), ' click ', strong('Select file…'), ' and pick ', h('code', { text: 'i6-share-hub.swbn' }), '.'],
-        ),
+        p(strong(`Chrome ${MIN_CHROME}–${IWA_DEV_PAGE - 1}:`), ' open ', h('code', { text: 'chrome://web-app-internals' }),
+          ', find ', strong('Install IWA from Update Manifest'), ', paste the address above, click ', strong('Fetch'),
+          ', then ', strong('Install'), '.'),
       ];
       const [first, second] = useIwaDev() ? [iwaDev, internals] : [internals, iwaDev];
       return [
-        p(strong('Recommended:'), ' quit Chrome completely (close every window), then run this in a terminal. ',
-          'Chrome starts and installs the hub; you\'ll find "i6-share Hub" in your app launcher.'),
-        codeBlock('google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"'),
-        p('The flags from step 2 must stay enabled so the app keeps working after later restarts.'),
+        p(strong('Recommended.'), ' Copy this address – it tells Chrome where the hub and its future versions live:'),
+        codeBlock(UPDATE_URL),
+        codeBlock(useIwaDev() ? 'chrome://iwa-dev' : 'chrome://web-app-internals'),
+        ...first,
+        p('"i6-share Hub" then appears in your app launcher. Chrome checks for new versions by itself; to update right away use ',
+          strong('Perform update now'), ' (or ', strong('Update'), ') on the same page while the hub window is closed. ',
+          'Your pairings and settings are kept.'),
         h('details', { class: 'setup-details' },
-          h('summary', { text: 'Or install from Chrome\'s pages' }), ...first, ...second),
+          h('summary', { text: useIwaDev() ? 'Older Chrome versions' : 'Newer Chrome versions' }), ...second),
         h('details', { class: 'setup-details' },
-          h('summary', { text: 'Updating later' }),
-          p('Download the new bundle and install it the same way. It is signed with the same key, so it is the same app; ',
-            'if Chrome refuses because it is already installed, uninstall the old version first (you may then need to pick the folder and pair again). ',
-            `With Chrome ${IWA_DEV_PAGE}+ you can instead try the `, strong('Update Manifest'), ' tab of chrome://iwa-dev with this URL, which lets Chrome look for new versions itself:'),
-          codeBlock(UPDATE_URL)),
+          h('summary', { text: 'Install the downloaded file from the command line instead' }),
+          p('Quit Chrome completely (close every window), then run:'),
+          codeBlock('google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"'),
+          p('This works too, but an app installed from a file is not updated automatically, and installing a newer file over it fails with “App is already installed”.')),
       ];
     },
   },
