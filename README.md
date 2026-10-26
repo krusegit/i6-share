@@ -63,15 +63,22 @@ Target platform: **Debian 13 (trixie)** with **Google Chrome**.
    ```
 2. Enable `chrome://flags/#enable-isolated-web-apps` and
    `chrome://flags/#enable-isolated-web-app-dev-mode`, then relaunch.
-3. Download [`hub/i6-share-hub.swbn`](https://krusegit.github.io/i6-share/hub/i6-share-hub.swbn).
-4. Quit Chrome completely, then install it from the command line (tested):
+3. Install the hub from its **update manifest** (recommended – Chrome then keeps it updated and
+   your pairings survive updates):
+   `https://krusegit.github.io/i6-share/hub/update.json`
+   * Chrome 120–153: `chrome://web-app-internals` → **Install IWA from Update Manifest** →
+     paste the URL → **Fetch** → **Install**.
+   * Chrome 154+: `chrome://iwa-dev` → **Install** → **Update Manifest** tab → same URL.
+   * To update immediately: **Perform update now** / **Update** on that page while the hub
+     window is closed.
+4. Alternative: download [`hub/i6-share-hub.swbn`](https://krusegit.github.io/i6-share/hub/i6-share-hub.swbn),
+   quit Chrome completely and run
    ```sh
    google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode \
      --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"
    ```
-   Alternatives: `chrome://iwa-dev` (Chrome 154+) or `chrome://web-app-internals`
-   (Chrome 120–153) → install from signed web bundle or from the update manifest
-   `https://krusegit.github.io/i6-share/hub/update.json`.
+   (file installs don't auto-update; installing a newer file over it fails with
+   "App is already installed").
 5. Firewall: a fresh Debian 13 has no rules (`sudo nft list ruleset` prints nothing) — then skip
    this. Otherwise allow TCP 47616:
    ```sh
