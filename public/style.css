@@ -321,7 +321,7 @@ a { color: var(--accent-text); }
   padding: 2px 6px; border-radius: 4px; text-align: right;
   font: 10px/1.35 var(--mono); letter-spacing: 0; color: var(--on-surface-medium);
   background: color-mix(in srgb, var(--background) 85%, transparent);
-  user-select: text;
+  pointer-events: none;   /* never blocks a button underneath */
 }
 body:has(.build-badge) .fab { bottom: calc(44px + env(safe-area-inset-bottom)); }
 body:has(.build-badge) .snackbar { bottom: calc(116px + env(safe-area-inset-bottom)); }

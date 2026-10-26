@@ -64,10 +64,14 @@ curl -fsSL https://krusegit.github.io/i6-share/install.sh | bash
 [`install.sh`](public/install.sh) installs Google Chrome (Google's `.deb`, which also adds
 Google's apt repository), enables the two Isolated Web App flags in Chrome's `Local State`
 (exactly what `chrome://flags` does), downloads the hub bundle and checks its SHA-256,
-installs it into Chrome, adds a login autostart entry, opens TCP 47616 when nftables/iptables
-rules would block it (`/etc/nftables.conf` is backed up to `.i6bak` before it's edited) and
-opens the hub. Chrome is closed first if it's running (it asks). Options:
-`--yes --no-firewall --no-autostart --no-launch` (`curl … | bash -s -- --yes`).
+installs it into Chrome and opens TCP 47616 when nftables/iptables rules would block it
+(`/etc/nftables.conf` is backed up to `.i6bak` before it's edited). Chrome is closed first if
+it's running (it asks) and closed again after the install.
+
+**Nothing starts automatically** – no login autostart, no background service. The hub only
+listens on port 47616 while you have its window open: start "i6-share Hub" from the app
+menu when you want to receive, close the window to stop. Options: `--yes --no-firewall`
+(`curl … | bash -s -- --yes`).
 Re-running it is safe. Chrome shows an "unsupported feature flag: IsolatedWebAppDevMode"
 bar, which is expected: developer mode is the only way to install IWAs outside managed
 ChromeOS today (policy installs on Linux are restricted to Google's allowlist).

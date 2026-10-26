@@ -6,15 +6,16 @@
 # Options (pass after `bash -s --`):
 #   --yes            don't ask; close Google Chrome automatically if it is open
 #   --no-firewall    leave nftables/iptables alone
-#   --no-autostart   don't start the hub when you log in
-#   --no-launch      don't open the hub at the end
 #
 # What it does:
 #   1. installs Google Chrome (Google's .deb, which also adds Google's apt repo)
 #   2. enables the two Chrome flags Isolated Web Apps need (same as chrome://flags)
 #   3. downloads the signed hub bundle, checks its SHA-256 and installs it in Chrome
-#   4. starts the hub at login and opens it now
-#   5. opens TCP port 47616 if nftables/iptables rules would block it
+#   4. opens TCP port 47616 if nftables/iptables rules would block it
+#
+# It never starts anything on its own: no autostart at login, and Chrome is closed
+# again after the install. The hub only listens while you have its window open –
+# start it yourself from the app menu ("i6-share Hub") when you want to receive.
 #
 # Run it as your normal desktop user from a terminal inside your desktop session.
 # It uses sudo only for apt and the firewall.
@@ -27,13 +28,11 @@ main() {
   local APP_ID=jijddeenooofgclmjgcfmgeggbnmbgoa   # Chrome's id for isolated-app://co7xx…aaic
   local CHROME_DEB=https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 
-  local ASSUME_YES=0 FIREWALL=1 AUTOSTART=1 LAUNCH=1
+  local ASSUME_YES=0 FIREWALL=1
   for arg in "$@"; do
     case "$arg" in
       -y|--yes) ASSUME_YES=1 ;;
       --no-firewall) FIREWALL=0 ;;
-      --no-autostart) AUTOSTART=0 ;;
-      --no-launch) LAUNCH=0 ;;
       -h|--help) sed -n '2,22p' "${BASH_SOURCE[0]:-/dev/null}" 2>/dev/null || true; return 0 ;;
       *) die "unknown option: $arg" ;;
     esac
@@ -171,27 +170,20 @@ PY
     esac
     echo "$version" > "$I6_DIR/installed-version"
     for _ in $(seq 1 20); do [ -f "$DESKTOP_FILE" ] && break; sleep 0.5; done
+    # Don't leave anything running: close the Chrome we started for the install.
+    local cpid
+    if cpid="$(chrome_pid "$CHROME_DIR")"; then
+      kill -TERM "$cpid" 2>/dev/null || true
+      for _ in $(seq 1 30); do chrome_pid "$CHROME_DIR" >/dev/null || break; sleep 0.5; done
+      info "Closed Chrome again – nothing is running now."
+    fi
   fi
 
-  # ---------------------------------------------------------------- autostart + launch
-  local exec_line="google-chrome --profile-directory=Default --app-id=$APP_ID"
-  if [ -f "$DESKTOP_FILE" ]; then
-    exec_line="$(sed -n 's/^Exec=//p' "$DESKTOP_FILE" | head -1)"
-  fi
-  if [ "$AUTOSTART" = 1 ]; then
-    step "Starting the hub at login"
-    mkdir -p "$CONFIG/autostart"
-    cat > "$CONFIG/autostart/i6-share-hub.desktop" <<EOF
-[Desktop Entry]
-Type=Application
-Name=i6-share Hub
-Comment=Receive files from your phone over the local network
-Exec=$exec_line
-Icon=chrome-$APP_ID-Default
-Terminal=false
-X-GNOME-Autostart-enabled=true
-EOF
-    info "$CONFIG/autostart/i6-share-hub.desktop"
+  # Older versions of this installer added a login autostart entry: remove it.
+  local old_autostart="$CONFIG/autostart/i6-share-hub.desktop"
+  if [ -f "$old_autostart" ] && grep -q '^Name=i6-share Hub' "$old_autostart"; then
+    rm -f "$old_autostart"
+    info "Removed the old login autostart entry ($old_autostart)."
   fi
 
   # ---------------------------------------------------------------- firewall
@@ -200,18 +192,13 @@ EOF
     open_firewall "$PORT"
   fi
 
-  if [ "$LAUNCH" = 1 ]; then
-    step "Opening i6-share Hub"
-    # shellcheck disable=SC2086
-    setsid $exec_line >/dev/null 2>&1 </dev/null &
-  fi
-
   # ---------------------------------------------------------------- done
   local ip
   # Source address of the default route (no packet is sent).
   ip="$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p' | head -1 || true)"
-  printf '\n\033[1;32m✓ Done.\033[0m\n'
-  echo "  The hub runs in Chrome as \"i6-share Hub\"${ip:+ and listens on $ip:$PORT}."
+  printf '\n\033[1;32m✓ Done.\033[0m Nothing is running and nothing starts automatically.\n'
+  echo "  When you want to receive files, open \"i6-share Hub\" from your app menu."
+  echo "  It listens${ip:+ on $ip:$PORT} only while its window is open; close it to stop."
   echo "  First start: name the computer and pick a folder for received files."
   echo "  On your Android phone open $BASE_URL/ in Chrome, install it,"
   echo "  then scan the QR code shown by the hub. After that, Share → i6-share just works."
