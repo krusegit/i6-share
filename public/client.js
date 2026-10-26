@@ -59,7 +59,7 @@ import {
   pairPayloadFromText, cleanFileName,
 } from './lib/proto.js';
 
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.1';
 
 const HELLO_TIMEOUT = 4000;         // direct liveness check
 const SWEEP_TIMEOUT = 1500;         // per address while sweeping a /24
@@ -165,7 +165,8 @@ export function sweepCandidates(addrs, maxNets = 4) {
   const out = [];
   for (const a of addrs) {
     const b = ipToBytes(a);
-    if (!b || b.length !== 4 || !isPrivateIp(a)) continue;
+    // Only real LANs: loopback and link-local (169.254/16) aren't worth a sweep.
+    if (!b || b.length !== 4 || !isPrivateIp(a) || b[0] === 127 || (b[0] === 169 && b[1] === 254)) continue;
     const net = `${b[0]}.${b[1]}.${b[2]}`;
     if (nets.has(net) || nets.size >= maxNets) continue;
     nets.add(net);

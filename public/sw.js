@@ -9,7 +9,7 @@
 
 import { store } from './lib/store.js';
 
-const VERSION = '1.0.0';   // keep in sync with APP_VERSION in client.js; bump to refresh caches
+const VERSION = '1.0.1';   // keep in sync with APP_VERSION in client.js; bump to refresh caches
 const CACHE = `i6-share-${VERSION}`;
 const SHELL = [
   './', './index.html', './app.js', './app.css', './client.js', './style.css',
