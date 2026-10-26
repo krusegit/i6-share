@@ -103,7 +103,7 @@ function banner(kind, iconName, ...content) {
 const STEPS = [
   {
     title: 'Check your browser',
-    caption: 'Chrome or Chromium 120+ on Linux',
+    caption: 'Google Chrome on Debian 13',
     body: () => {
       const rows = [];
       if (!browser.chromiumBased) {
@@ -128,6 +128,9 @@ const STEPS = [
       }
       return [
         ...rows,
+        p('Use ', strong('Google Chrome'), '. In our tests on Debian 13, Debian’s own ', h('code', { text: 'chromium' }),
+          ' package (156) could not install signed Isolated Web Apps, while Google Chrome could. Install Google Chrome with:'),
+        codeBlock('wget -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt install -y /tmp/google-chrome.deb'),
         p('Use the browser profile you normally use. The hub is installed into that Chrome profile.'),
       ];
     },
@@ -187,17 +190,12 @@ const STEPS = [
       ];
       const [first, second] = useIwaDev() ? [iwaDev, internals] : [internals, iwaDev];
       return [
-        ...first,
+        p(strong('Recommended:'), ' quit Chrome completely (close every window), then run this in a terminal. ',
+          'Chrome starts and installs the hub; you\'ll find "i6-share Hub" in your app launcher.'),
+        codeBlock('google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"'),
+        p('The flags from step 2 must stay enabled so the app keeps working after later restarts.'),
         h('details', { class: 'setup-details' },
-          h('summary', { text: useIwaDev() ? 'Older Chrome versions' : 'Newer Chrome versions' }), ...second),
-        h('details', { class: 'setup-details' },
-          h('summary', { text: 'Install from the command line instead' }),
-          p('Quit the browser completely first, otherwise the extra options are ignored. Then run the line for your browser:'),
-          p(strong('Google Chrome')),
-          codeBlock('google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"'),
-          p(strong('Chromium'), ' (the command may be ', h('code', { text: 'chromium-browser' }), ' on some distributions)'),
-          codeBlock('chromium --enable-features=IsolatedWebApps,IsolatedWebAppDevMode --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"'),
-          p('The flags from step 2 must still be enabled so the app keeps working after later restarts.')),
+          h('summary', { text: 'Or install from Chrome\'s pages' }), ...first, ...second),
         h('details', { class: 'setup-details' },
           h('summary', { text: 'Updating later' }),
           p('Download the new bundle and install it the same way. It is signed with the same key, so it is the same app; ',
@@ -211,13 +209,17 @@ const STEPS = [
     title: 'Open the firewall',
     caption: `Allow TCP port ${PORT} from your network`,
     body: () => [
-      p('Your phone connects to the hub on port ', strong(String(PORT)), '. Most desktop Linux systems have no active firewall. ',
-        strong('If yours has none, skip this step.')),
-      p(strong('Ubuntu, Mint, Debian with ufw:')),
-      codeBlock(`sudo ufw allow ${PORT}/tcp`),
-      p(strong('Fedora, openSUSE, RHEL with firewalld:')),
-      codeBlock(`sudo firewall-cmd --add-port=${PORT}/tcp --permanent && sudo firewall-cmd --reload`),
-      p('Not sure? ', h('code', { text: 'sudo ufw status' }), ' or ', h('code', { text: 'sudo firewall-cmd --state' }), ' tells you whether one is running.'),
+      p('Your phone connects to the hub on port ', strong(String(PORT)), '. A fresh Debian 13 install has no firewall rules, so first check:'),
+      codeBlock('sudo nft list ruleset'),
+      p(strong('Empty output? Skip this step.'), ' Otherwise allow the port with whichever tool you use:'),
+      p(strong('nftables'), ' (Debian 13 default, works with the stock /etc/nftables.conf):'),
+      codeBlock(`sudo nft insert rule inet filter input tcp dport ${PORT} accept`),
+      p(strong('iptables:')),
+      codeBlock(`sudo iptables -I INPUT -p tcp --dport ${PORT} -j ACCEPT && sudo ip6tables -I INPUT -p tcp --dport ${PORT} -j ACCEPT`),
+      p('Both commands last until the next reboot. To make it permanent with nftables, add this line inside ',
+        h('code', { text: 'chain input { … }' }), ' in ', h('code', { text: '/etc/nftables.conf' }), ' and run ',
+        h('code', { text: 'sudo systemctl enable --now nftables' }), ':'),
+      codeBlock(`tcp dport ${PORT} accept`),
     ],
   },
   {
