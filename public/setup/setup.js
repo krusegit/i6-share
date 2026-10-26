@@ -117,7 +117,7 @@ const STEPS = [
           `Isolated Web Apps need version ${MIN_CHROME} or newer. Update your browser, then reload this page.`));
       } else {
         rows.push(checkRow(true, `${browser.browser} ${browser.major}`,
-          'Good. Google Chrome and Chromium both work.'));
+          /chromium/i.test(browser.browser) ? 'Supported, but Google Chrome is recommended (see below).' : 'Good.'));
       }
       if (browser.os === 'Linux') rows.push(checkRow(true, 'Linux', 'Supported.'));
       else if (browser.os === 'Android' || browser.os === 'iOS') {
