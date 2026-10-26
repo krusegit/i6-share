@@ -2,7 +2,7 @@
 
 import {
   h, render, icon, iconButton, button, progress, snackbar, dialog, textField,
-  formatBytes, timeAgo, downloadFile, wakeLock,
+  formatBytes, timeAgo, downloadFile, wakeLock, buildBadge,
 } from './lib/dom.js';
 import { store, persist } from './lib/store.js';
 import { pairPayloadFromText } from './lib/proto.js';
@@ -544,6 +544,9 @@ async function start() {
     h('button', { class: 'fab fab--extended', attrs: { 'aria-label': 'Send files' }, onclick: () => pick(null) },
       icon('attach'), h('span', { text: 'Send files' })),
     fileInput);
+  import('./build-info.js')
+    .catch(() => ({ BUILD: {} }))
+    .then(({ BUILD }) => document.body.append(buildBadge({ ...BUILD, version: BUILD.version ?? APP_VERSION })));
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js', { type: 'module', scope: './' }).catch((err) => console.warn('service worker', err));

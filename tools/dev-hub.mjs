@@ -16,7 +16,8 @@
 
 import http from 'node:http';
 import fs from 'node:fs';
-import { HUB_DIR, IWA_HEADERS, collectHubFiles, mimeType } from './hub-files.mjs';
+import { HUB_DIR, IWA_HEADERS, collectHubFiles, mimeType, readHubManifest } from './hub-files.mjs';
+import { buildInfo, buildInfoModule } from './build-info.mjs';
 
 const PORT = Number(process.env.PORT) || 5193;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -45,6 +46,14 @@ const server = http.createServer((req, res) => {
   if (urlPath.endsWith('/')) urlPath += 'index.html';
   else if (!byPath.has(urlPath) && byPath.has(`${urlPath}/index.html`)) return reply(301, '', { Location: `${urlPath}/` });
 
+  if (urlPath === '/build-info.js') {
+    let version = null;
+    try { version = readHubManifest(files).version; } catch { /* badge shows '?' */ }
+    const body = buildInfoModule(buildInfo(version));
+    res.writeHead(200, { ...headers, 'Content-Type': 'text/javascript; charset=utf-8', 'Content-Length': Buffer.byteLength(body) });
+    log(req, 200);
+    return res.end(req.method === 'HEAD' ? undefined : body);
+  }
   const file = byPath.get(urlPath);
   const st = file && fs.statSync(file, { throwIfNoEntry: false });
   if (!st?.isFile()) {

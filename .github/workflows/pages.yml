@@ -36,6 +36,12 @@ jobs:
           cp -a src/public/. site/
           touch site/.nojekyll
 
+      - name: Stamp build info (version badge)
+        run: |
+          version="$(sed -n "s/^export const APP_VERSION = '\(.*\)';/\1/p" src/public/client.js)"
+          node src/tools/build-info.mjs "$version" > site/build-info.js
+          cat site/build-info.js
+
       - name: Commit and push
         working-directory: site
         run: |

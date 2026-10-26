@@ -14,6 +14,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, mimeType } from './hub-files.mjs';
+import { buildInfo, buildInfoModule } from './build-info.mjs';
 
 const DIR = path.join(ROOT, 'public');
 const PORT = Number(process.env.PORT) || 8080;
@@ -36,6 +37,10 @@ const server = http.createServer((req, res) => {
   if (urlPath === '/i6-share') return send(res, 301, '', { Location: '/i6-share/' });
   if (urlPath.startsWith('/i6-share/')) urlPath = urlPath.slice('/i6-share'.length);
 
+  if (urlPath === '/build-info.js') {   // live build data for the version badge
+    log(req, 200);
+    return send(res, 200, buildInfoModule(buildInfo(null)), { 'Content-Type': 'text/javascript; charset=utf-8' });
+  }
   let file = path.join(DIR, path.normalize(urlPath));
   if (file !== DIR && !file.startsWith(DIR + path.sep)) return send(res, 403, 'Forbidden\n');
   let st = fs.statSync(file, { throwIfNoEntry: false });

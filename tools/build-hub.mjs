@@ -25,6 +25,7 @@ import path from 'node:path';
 import { BundleBuilder } from 'wbn';
 import { SignedWebBundle, NodeCryptoSigningStrategy, WebBundleId, parsePemKey } from 'wbn-sign';
 import { ROOT, HUB_DIR, IWA_HEADERS, collectHubFiles, readHubManifest, mimeType } from './hub-files.mjs';
+import { buildInfo, buildInfoModule } from './build-info.mjs';
 
 const BUNDLE_NAME = 'i6-share-hub.swbn';
 const OUT_DIR = path.resolve(ROOT, process.env.I6_OUT_DIR || path.join('public', 'hub'));
@@ -94,6 +95,9 @@ async function main() {
       builder.addExchange(baseURL + urlPath.slice(1), 200, headersFor(file), body);
     }
   }
+  // Version badge data (commit + timestamps), generated per build.
+  const build = buildInfo(version);
+  builder.addExchange(baseURL + 'build-info.js', 200, headersFor('build-info.js'), buildInfoModule(build));
   const unsigned = builder.createBundle();
 
   const signed = await SignedWebBundle.fromWebBundle(unsigned, [new NodeCryptoSigningStrategy(key)]);
@@ -107,7 +111,9 @@ async function main() {
     version,
     size: bytes.byteLength,
     webBundleId,
-    builtAt: new Date().toISOString(),
+    commit: build.commit,
+    committedAt: build.committedAt,
+    builtAt: build.builtAt,
     sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
   };
   writeAtomic(path.join(OUT_DIR, BUNDLE_NAME), bytes);
@@ -119,6 +125,7 @@ async function main() {
   console.log(`Hub bundle built:
   files          ${files.length} (${files.map((f) => f.urlPath).join(' ')})
   version        ${version}
+  commit         ${build.commit} (${build.committedAt})
   Web Bundle ID  ${webBundleId}
   origin         ${baseURL}
   key            ${KEY_PATH}

@@ -3,7 +3,7 @@
 import { PORT, APP_URL } from './lib/proto.js';
 import {
   h, render, icon, iconButton, button, progress, snackbar, dialog, textField, codeBlock,
-  formatBytes, timeAgo,
+  formatBytes, timeAgo, buildBadge,
 } from './lib/dom.js';
 import { store, persist } from './lib/store.js';
 import { startServer } from './http.js';
@@ -603,6 +603,11 @@ async function boot() {
     await new Promise(() => {}); // hold the lock for as long as this window lives
   });
 }
+
+// Version badge in the bottom-right corner on every screen (lives outside #app).
+import('./build-info.js')
+  .catch(() => ({ BUILD: {} }))
+  .then(({ BUILD }) => document.body.append(buildBadge(BUILD)));
 
 if (typeof globalThis.TCPServerSocket === 'undefined') renderNotIwa();
 else boot().catch(fatal);

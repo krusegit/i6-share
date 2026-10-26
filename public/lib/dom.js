@@ -152,6 +152,25 @@ export function codeBlock(text) {
     }));
 }
 
+/**
+ * Small sticky version badge for the bottom-right corner.
+ * build: {version, commit, committedAt, builtAt} (ISO timestamps) from build-info.js.
+ */
+export function buildBadge(build = {}) {
+  const fmt = (iso) => {
+    const d = iso ? new Date(iso) : null;
+    if (!d || Number.isNaN(d.getTime())) return '–';
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+  return h('div', {
+    class: 'build-badge',
+    attrs: { title: `Version ${build.version ?? '?'}\nCommit ${build.commit ?? '?'} (${build.committedAt ?? 'unknown'})\nBuilt ${build.builtAt ?? 'unknown'}` },
+  },
+  h('div', { text: `v${build.version ?? '?'} · ${build.commit ?? 'dev'}` }),
+  h('div', { text: `commit ${fmt(build.committedAt)} · built ${fmt(build.builtAt)}` }));
+}
+
 // ---------------------------------------------------------------- formatting
 
 export function formatBytes(n) {
