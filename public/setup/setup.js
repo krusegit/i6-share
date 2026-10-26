@@ -399,4 +399,19 @@ async function init() {
   });
 }
 
+function renderQuickInstall() {
+  const el = $('#quick-install-body');
+  if (!el) return;
+  const cmd = `curl -fsSL ${new URL('../install.sh', location.href).href} | bash`;
+  render(el,
+    p('Open a terminal on the Linux PC (in your desktop session, as your normal user) and run:'),
+    codeBlock(cmd),
+    p('It asks for your password for ', h('code', { text: 'sudo' }), ' (installing Chrome, firewall) and closes Chrome if it is open. ',
+      'When it finishes, the hub window opens: name the computer, pick a folder, then continue with step 6 below.'),
+    p(h('a', { href: '../install.sh', target: '_blank', rel: 'noopener', text: 'Read the script first' }),
+      ' · options: ', h('code', { text: '--yes  --no-firewall  --no-autostart  --no-launch' }),
+      ' (use ', h('code', { text: '| bash -s -- --yes' }), ')'));
+}
+
+renderQuickInstall();
 init();

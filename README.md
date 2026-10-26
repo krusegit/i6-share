@@ -55,6 +55,26 @@ It checks your browser and includes a "Test connection" button. In short:
 
 Target platform: **Debian 13 (trixie)** with **Google Chrome**.
 
+**One-line install** (run as your normal user in a terminal inside your desktop session):
+
+```sh
+curl -fsSL https://krusegit.github.io/i6-share/install.sh | bash
+```
+
+[`install.sh`](public/install.sh) installs Google Chrome (Google's `.deb`, which also adds
+Google's apt repository), enables the two Isolated Web App flags in Chrome's `Local State`
+(exactly what `chrome://flags` does), downloads the hub bundle and checks its SHA-256,
+installs it into Chrome, adds a login autostart entry, opens TCP 47616 when nftables/iptables
+rules would block it (`/etc/nftables.conf` is backed up to `.i6bak` before it's edited) and
+opens the hub. Chrome is closed first if it's running (it asks). Options:
+`--yes --no-firewall --no-autostart --no-launch` (`curl … | bash -s -- --yes`).
+Re-running it is safe. Chrome shows an "unsupported feature flag: IsolatedWebAppDevMode"
+bar, which is expected: developer mode is the only way to install IWAs outside managed
+ChromeOS today (policy installs on Linux are restricted to Google's allowlist).
+
+Manual steps:
+
+
 1. Install Google Chrome (tested with 151 on Debian 13; Debian's own `chromium` 156 package
    could not install signed IWAs in our tests):
    ```sh
