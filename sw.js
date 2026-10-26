@@ -9,11 +9,11 @@
 
 import { store } from './lib/store.js';
 
-const VERSION = '1.0.2';   // keep in sync with APP_VERSION in client.js; bump to refresh caches
+const VERSION = '1.0.3';   // keep in sync with APP_VERSION in client.js; bump to refresh caches
 const CACHE = `i6-share-${VERSION}`;
 const SHELL = [
   './', './index.html', './app.js', './app.css', './client.js', './style.css',
-  './lib/proto.js', './lib/dom.js', './lib/store.js', './manifest.webmanifest',
+  './lib/proto.js', './lib/dom.js', './lib/store.js', './manifest.webmanifest', './build-info.js',
 ];
 const OPTIONAL = [
   './icons/icon.svg', './icons/favicon.svg', './icons/icon-192.png', './icons/icon-512.png',
@@ -51,8 +51,23 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET' || req.headers.has('range')) return;
   if (!url.href.startsWith(self.registration.scope)) return;
   if (url.pathname.endsWith('.swbn')) return;                  // big hub bundle download
+  if (url.pathname.endsWith('/build-info.js')) {               // changes with every deploy
+    event.respondWith(networkFirst(req));
+    return;
+  }
   event.respondWith(staleWhileRevalidate(event, req));
 });
+
+async function networkFirst(req) {
+  const cache = await caches.open(CACHE);
+  try {
+    const res = await fetch(req, { cache: 'no-cache' });
+    if (res.ok) await cache.put(req, res.clone());
+    return res;
+  } catch (err) {
+    return (await cache.match(req)) || Promise.reject(err);
+  }
+}
 
 async function staleWhileRevalidate(event, req) {
   const cache = await caches.open(CACHE);
