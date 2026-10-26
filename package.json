@@ -1,0 +1,21 @@
+{
+  "name": "i6-share",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-network file sharing between an Android phone (PWA) and a Linux PC (Isolated Web App hub).",
+  "type": "module",
+  "scripts": {
+    "build:hub": "node tools/build-hub.mjs",
+    "build:icons": "node tools/build-icons.mjs",
+    "dev": "node tools/dev-server.mjs",
+    "dev:hub": "node tools/dev-hub.mjs",
+    "test": "node tools/test-e2e.mjs"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "devDependencies": {
+    "wbn": "^0.0.9",
+    "wbn-sign": "^0.3.3"
+  }
+}

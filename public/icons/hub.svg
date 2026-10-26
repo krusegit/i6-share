@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>i6-share Hub</title>
+  <rect width="512" height="512" rx="112" fill="#6200EE"/>
+  <g fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="96" y="132" width="320" height="216" rx="20"/>
+    <path d="M200 412h112M256 348v64"/>
+  </g>
+  <g fill="none" stroke="#03DAC6" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M256 186v94M214 240l42 42 42-42"/>
+  </g>
+</svg>

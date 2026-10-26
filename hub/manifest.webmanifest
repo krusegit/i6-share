@@ -1,0 +1,43 @@
+{
+  "name": "i6-share Hub",
+  "short_name": "i6 Hub",
+  "description": "Receive and send files between your phone and this computer over the local network.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "version": "1.0.0",
+  "theme_color": "#6200ee",
+  "background_color": "#fafafa",
+  "icons": [
+    {
+      "src": "/icons/hub-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/hub-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "permissions_policy": {
+    "direct-sockets": [
+      "self"
+    ],
+    "direct-sockets-private": [
+      "self"
+    ],
+    "local-network": [
+      "self"
+    ],
+    "loopback-network": [
+      "self"
+    ],
+    "cross-origin-isolated": [
+      "self"
+    ]
+  }
+}

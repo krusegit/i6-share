@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#6200ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#272727" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Send files between your phone and your Linux PC over the local network. No cloud, no accounts.">
+  <title>i6-share</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app.css">
+  <link rel="modulepreload" href="client.js">
+  <link rel="modulepreload" href="lib/proto.js">
+  <link rel="modulepreload" href="lib/dom.js">
+  <link rel="modulepreload" href="lib/store.js">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="app-bar">
+    <h1 class="app-bar__title">i6-share</h1>
+    <span class="status hidden" id="conn"></span>
+    <span id="bar-actions"></span>
+  </header>
+  <main class="content" id="main">
+    <noscript>i6-share needs JavaScript. Open this page in Chrome.</noscript>
+  </main>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# secrets – the hub signing key must never be committed
+*.pem
+*.key
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# temp / tool output
+tmp/
+*.tmp
+*.tmp-*
+*.log
+npm-debug.log*
+.playwright-mcp/
+test-results/
+playwright-report/
+
+# NOTE: public/hub/*.swbn, version.json and update.json are tracked on purpose:
+# GitHub Pages serves the hub bundle from there.
