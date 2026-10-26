@@ -315,9 +315,13 @@ function unpairedBanner() {
 }
 
 function thumb(file) {
-  if (isImage(file)) return h('img', { class: 'thumb', src: urlFor(file), alt: file.name, loading: 'lazy', decoding: 'async' });
   const ext = (file.name.match(/\.([^.]{1,5})$/)?.[1] || '').toUpperCase();
-  return h('div', { class: 'thumb thumb--file', attrs: { title: file.name } }, icon('file'), ext && h('span', { class: 'thumb__ext', text: ext }));
+  const fileThumb = () => h('div', { class: 'thumb thumb--file', attrs: { title: file.name } }, icon('file'), ext && h('span', { class: 'thumb__ext', text: ext }));
+  if (!isImage(file)) return fileThumb();
+  // Formats the browser can't decode (e.g. HEIC) fall back to the file tile.
+  const img = h('img', { class: 'thumb', src: urlFor(file), alt: '', loading: 'lazy', decoding: 'async',
+    onerror: () => img.replaceWith(fileThumb()) });
+  return img;
 }
 
 function stagedCard() {
