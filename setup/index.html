@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Set up i6-share on Linux</title>
+  <meta name="description" content="Step-by-step guide to install the i6-share Hub on your Linux PC, so your phone can send files to it over your local network.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#6200ee" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#272727" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="setup.css">
+  <script type="module" src="setup.js"></script>
+</head>
+<body>
+  <header class="app-bar">
+    <img class="setup-logo" src="../icons/icon.svg" alt="" width="32" height="32">
+    <h1 class="app-bar__title">Set up i6-share on Linux</h1>
+    <a class="btn setup-bar-link" href="../">Phone app</a>
+  </header>
+
+  <main class="content">
+    <section class="card card--accent">
+      <div class="card__header">
+        <h2 class="card__title">Send files from your phone to this PC</h2>
+        <p class="card__subtitle">About 5 minutes, once. Everything stays on your local network.</p>
+      </div>
+      <div class="card__body setup-intro">
+        <p>
+          Your phone sends files straight to a small app on this computer, the
+          <strong>i6-share Hub</strong>. It runs in Chrome or Chromium as an
+          <em>Isolated Web App</em>, the only kind of web app that may open a network port.
+          Follow the steps below. Your progress is saved, so you can close this page and come back.
+        </p>
+      </div>
+    </section>
+
+    <div id="notice"></div>
+
+    <section class="card">
+      <div id="stepper" class="stepper" aria-label="Setup steps">
+        <noscript><p class="card__body">This guide needs JavaScript.</p></noscript>
+      </div>
+    </section>
+
+    <section class="card" id="troubleshooting">
+      <div class="card__header">
+        <h2 class="card__title">Troubleshooting</h2>
+      </div>
+      <div class="card__body">
+        <ul class="setup-list">
+          <li><strong>Same Wi-Fi.</strong> The phone and the PC must be on the same local network
+            (the PC may use a cable to the same router).</li>
+          <li><strong>Guest networks and "AP/client isolation"</strong> block traffic between devices.
+            Use your main network, or turn isolation off in the router settings.</li>
+          <li><strong>VPNs</strong> on the phone or the PC can route local traffic away. Pause them,
+            or allow LAN access in the VPN app.</li>
+          <li><strong>The PC got a new IP address?</strong> Nothing to do. The phone searches the
+            local network for its paired hub and finds it again.</li>
+          <li><strong>The phone says it can't reach the PC.</strong> Make sure the hub window is open,
+            the firewall allows port 47616 (step 5), and Chrome on the phone may access local network
+            devices (site settings → Local network access → Allow).</li>
+          <li><strong>"Pairing lost".</strong> The PC forgot the phone, for example after the hub was
+            reinstalled. Open the hub and scan its QR code again.</li>
+          <li><strong>Installing fails or the menu is missing.</strong> Check that both flags in
+            step 2 are set to <em>Enabled</em> and that Chrome was relaunched.</li>
+        </ul>
+      </div>
+    </section>
+
+    <p class="caption muted setup-footer">
+      <a href="../">Open the i6-share phone app</a> ·
+      <button type="button" class="setup-linkbtn" id="reset">Restart this guide</button>
+    </p>
+  </main>
+</body>
+</html>

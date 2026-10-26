@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>i6-share (maskable)</title>
+  <rect width="512" height="512" fill="#6200EE"/>
+  <g transform="translate(256 256) scale(.78) translate(-256 -262)">
+  <g fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="92" y="196" width="112" height="196" rx="20"/>
+    <rect x="252" y="216" width="176" height="124" rx="14"/>
+    <path d="M314 392h52M340 340v52"/>
+    <path d="M148 150C176 96 280 92 330 158"/>
+    <path d="M286 152l46 10 6-46"/>
+  </g>
+  <circle cx="148" cy="356" r="11" fill="#fff"/>
+  </g>
+</svg>
