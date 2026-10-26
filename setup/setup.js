@@ -407,9 +407,9 @@ function renderQuickInstall() {
     p('Open a terminal on the Linux PC (in your desktop session, as your normal user) and run:'),
     codeBlock(cmd),
     p('It asks for your password for ', h('code', { text: 'sudo' }), ' (installing Chrome, firewall) and closes Chrome if it is open. ',
-      'When it finishes, the hub window opens: name the computer, pick a folder, then continue with step 6 below.'),
+      'It starts nothing by itself – no autostart, and Chrome is closed again afterwards. When you want to receive files, open ', h('strong', { text: 'i6-share Hub' }), ' from your app menu; it only listens while its window is open. Then continue with step 6 below.'),
     p(h('a', { href: '../install.sh', target: '_blank', rel: 'noopener', text: 'Read the script first' }),
-      ' · options: ', h('code', { text: '--yes  --no-firewall  --no-autostart  --no-launch' }),
+      ' · options: ', h('code', { text: '--yes  --no-firewall' }),
       ' (use ', h('code', { text: '| bash -s -- --yes' }), ')'));
 }
 

@@ -59,7 +59,7 @@ import {
   pairPayloadFromText, cleanFileName,
 } from './lib/proto.js';
 
-export const APP_VERSION = '1.0.3';
+export const APP_VERSION = '1.0.4';
 
 const HELLO_TIMEOUT = 4000;         // direct liveness check
 const SWEEP_TIMEOUT = 1500;         // per address while sweeping a /24
