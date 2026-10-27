@@ -6735,7 +6735,7 @@ var store = storage.store;
 var kv = store("kv");
 
 // public/sw.ts
-var CACHE = "i6-share-1.0.4";
+var CACHE = "i6-share-1.1.0";
 var SHELL = [
   "./",
   "./index.html",
@@ -6832,7 +6832,7 @@ var handleFetch = (dependencies, event) => {
     event.respondWith(Effect_exports.runPromise(receiveShare(dependencies, request3)));
     return;
   }
-  if (request3.method !== "GET" || request3.headers.has("range") || !url.href.startsWith(scope3.registration.scope) || url.pathname.endsWith(".swbn")) return;
+  if (request3.method !== "GET" || request3.headers.has("range") || !url.href.startsWith(scope3.registration.scope) || url.href.startsWith(scoped3(scope3, "./downloads/"))) return;
   event.respondWith(Effect_exports.runPromise(url.pathname.endsWith("/build-info.js") ? networkFirst(dependencies, request3) : staleWhileRevalidate(dependencies, event, request3)));
 };
 var registerServiceWorker = (dependencies) => {

@@ -21342,6 +21342,188 @@ var updateSomeAndGet = /* @__PURE__ */ dual(2, (self, pf) => sync2(() => {
 }));
 var getUnsafe3 = (self) => self.ref.current;
 
+// public/generated/contracts.ts
+var WireConstants = {
+  appUrl: "https://krusegit.github.io/i6-share/",
+  chunkSize: 4194304,
+  maxBody: 4259840,
+  pairTokenTtlMs: 6e5,
+  port: 47616,
+  protocolVersion: 1,
+  syncWaitMs: 25e3
+};
+var AdminSettingsRequestSchema = Schema_exports.Struct({
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "receiveDirectory": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var DeviceSummarySchema = Schema_exports.Struct({
+  "deviceId": Schema_exports.String,
+  "name": Schema_exports.String,
+  "os": Schema_exports.String,
+  "pairedAt": Schema_exports.Number,
+  "lastSeen": Schema_exports.Number,
+  "lastAddr": Schema_exports.String,
+  "online": Schema_exports.Boolean
+});
+var TransferFileSummarySchema = Schema_exports.Struct({
+  "name": Schema_exports.String,
+  "originalName": Schema_exports.String,
+  "size": Schema_exports.Number,
+  "type": Schema_exports.String,
+  "bytes": Schema_exports.Number,
+  "done": Schema_exports.Boolean,
+  "where": Schema_exports.NullOr(Schema_exports.String)
+});
+var IncomingTransferSummarySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "deviceId": Schema_exports.String,
+  "deviceName": Schema_exports.String,
+  "files": Schema_exports.Array(TransferFileSummarySchema),
+  "count": Schema_exports.Number,
+  "done": Schema_exports.Number,
+  "bytes": Schema_exports.Number,
+  "total": Schema_exports.Number,
+  "complete": Schema_exports.Boolean,
+  "speed": Schema_exports.Number,
+  "createdAt": Schema_exports.Number,
+  "lastActivity": Schema_exports.Number
+});
+var FileMetadataSchema = Schema_exports.Struct({
+  "name": Schema_exports.String,
+  "size": Schema_exports.Number,
+  "type": Schema_exports.String,
+  "lastModified": Schema_exports.Number
+});
+var OutboxSummarySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "deviceId": Schema_exports.String,
+  "createdAt": Schema_exports.Number,
+  "files": Schema_exports.Array(FileMetadataSchema),
+  "count": Schema_exports.Number,
+  "bytes": Schema_exports.Number,
+  "total": Schema_exports.Number,
+  "speed": Schema_exports.Number,
+  "started": Schema_exports.Boolean
+});
+var ReceivedFileSummarySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "deviceId": Schema_exports.String,
+  "deviceName": Schema_exports.String,
+  "name": Schema_exports.String,
+  "originalName": Schema_exports.String,
+  "size": Schema_exports.Number,
+  "type": Schema_exports.String,
+  "where": Schema_exports.NullOr(Schema_exports.String),
+  "at": Schema_exports.Number
+});
+var AdminStatusResponseSchema = Schema_exports.Struct({
+  "hubId": Schema_exports.String,
+  "name": Schema_exports.String,
+  "receiveDirectory": Schema_exports.String,
+  "port": Schema_exports.Number,
+  "addrs": Schema_exports.Array(Schema_exports.String),
+  "devices": Schema_exports.Array(DeviceSummarySchema),
+  "transfers": Schema_exports.Array(IncomingTransferSummarySchema),
+  "outbox": Schema_exports.Array(OutboxSummarySchema),
+  "history": Schema_exports.Array(ReceivedFileSummarySchema)
+});
+var ErrorResponseSchema = Schema_exports.Struct({
+  "error": Schema_exports.String
+});
+var HelloResponseSchema = Schema_exports.Struct({
+  "app": Schema_exports.Literal("i6-share-hub"),
+  "v": Schema_exports.Number,
+  "id": Schema_exports.String,
+  "name": Schema_exports.String,
+  "port": Schema_exports.Number,
+  "addrs": Schema_exports.Array(Schema_exports.String)
+});
+var OfferedFileMetadataSchema = Schema_exports.Struct({
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "size": Schema_exports.Number,
+  "type": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "lastModified": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.Number))
+});
+var OfferRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "files": Schema_exports.Array(OfferedFileMetadataSchema)
+});
+var OfferResponseSchema = Schema_exports.Struct({
+  "received": Schema_exports.Array(Schema_exports.Number)
+});
+var OperationResponseSchema = Schema_exports.Struct({
+  "ok": Schema_exports.Boolean
+});
+var OutboxEntrySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "files": Schema_exports.Array(FileMetadataSchema)
+});
+var PairCodeResponseSchema = Schema_exports.Struct({
+  "payload": Schema_exports.String,
+  "link": Schema_exports.String,
+  "expiresAt": Schema_exports.Number
+});
+var PairRequestSchema = Schema_exports.Struct({
+  "deviceId": Schema_exports.String,
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "os": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var PairResponseSchema = Schema_exports.Struct({
+  "secret": Schema_exports.String,
+  "hubId": Schema_exports.String,
+  "name": Schema_exports.String
+});
+var PullRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "i": Schema_exports.Number,
+  "offset": Schema_exports.Number,
+  "length": Schema_exports.Number
+});
+var PullResponseSchema = Schema_exports.Struct({
+  "size": Schema_exports.Number
+});
+var PutRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "i": Schema_exports.Number,
+  "offset": Schema_exports.Number
+});
+var PutResponseSchema = Schema_exports.Struct({
+  "bytes": Schema_exports.Number,
+  "error": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var QueueFilesRequestSchema = Schema_exports.Struct({
+  "deviceId": Schema_exports.String,
+  "paths": Schema_exports.Array(Schema_exports.String)
+});
+var QueueFilesResponseSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String
+});
+var SyncRequestSchema = Schema_exports.Struct({
+  "wait": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.Number)),
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "os": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var SyncResponseSchema = Schema_exports.Struct({
+  "name": Schema_exports.String,
+  "addrs": Schema_exports.Array(Schema_exports.String),
+  "outbox": Schema_exports.Array(OutboxEntrySchema)
+});
+var TransferRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String
+});
+var UnpairRequestSchema = Schema_exports.Struct({});
+var WireResponseDecoders = {
+  cancel: Schema_exports.decodeUnknownSync(OperationResponseSchema),
+  end: Schema_exports.decodeUnknownSync(OperationResponseSchema),
+  offer: Schema_exports.decodeUnknownSync(OfferResponseSchema),
+  pair: Schema_exports.decodeUnknownSync(PairResponseSchema),
+  pull: Schema_exports.decodeUnknownSync(PullResponseSchema),
+  pulled: Schema_exports.decodeUnknownSync(OperationResponseSchema),
+  put: Schema_exports.decodeUnknownSync(PutResponseSchema),
+  sync: Schema_exports.decodeUnknownSync(SyncResponseSchema),
+  unpair: Schema_exports.decodeUnknownSync(OperationResponseSchema)
+};
+
 // public/lib/runtime.ts
 var runEffect = (program) => Effect_exports.runPromise(Effect_exports.result(program)).then(Result_exports.match({
   onFailure: (error) => {
@@ -21351,11 +21533,13 @@ var runEffect = (program) => Effect_exports.runPromise(Effect_exports.result(pro
 }));
 
 // public/lib/proto.ts
-var PORT = 47616;
-var CHUNK_SIZE = 4 * 1024 * 1024;
-var MAX_BODY = CHUNK_SIZE + 64 * 1024;
-var SYNC_WAIT_MS = 25e3;
-var PAIR_TOKEN_TTL_MS = 10 * 60 * 1e3;
+var PROTOCOL_VERSION = WireConstants.protocolVersion;
+var PORT = WireConstants.port;
+var APP_URL = WireConstants.appUrl;
+var CHUNK_SIZE = WireConstants.chunkSize;
+var MAX_BODY = WireConstants.maxBody;
+var SYNC_WAIT_MS = WireConstants.syncWaitMs;
+var PAIR_TOKEN_TTL_MS = WireConstants.pairTokenTtlMs;
 var enc = new TextEncoder();
 var dec = new TextDecoder();
 var bytesOf = (bytes2) => new Uint8Array(bytes2);
@@ -21508,24 +21692,13 @@ var cleanFileName = (name) => {
 // public/client.ts
 var UserAgentSchema = Schema_exports.Struct({ platform: Schema_exports.optional(Schema_exports.String) });
 var ModelSchema = Schema_exports.Struct({ model: Schema_exports.optional(Schema_exports.String) });
-var HelloSchema = Schema_exports.Struct({ app: Schema_exports.Literal("i6-share-hub"), id: Schema_exports.String, name: Schema_exports.String, addrs: Schema_exports.Array(Schema_exports.String) });
-var MetaSchema = Schema_exports.Struct({ name: Schema_exports.String, size: Schema_exports.Number, type: Schema_exports.String, lastModified: Schema_exports.Number });
-var WireSchema = Schema_exports.Struct({
-  secret: Schema_exports.optional(Schema_exports.String),
-  hubId: Schema_exports.optional(Schema_exports.String),
-  name: Schema_exports.optional(Schema_exports.String),
-  addrs: Schema_exports.optional(Schema_exports.Array(Schema_exports.String)),
-  outbox: Schema_exports.optional(Schema_exports.Array(Schema_exports.Struct({ tid: Schema_exports.String, files: Schema_exports.Array(MetaSchema) }))),
-  size: Schema_exports.optional(Schema_exports.Number),
-  received: Schema_exports.optional(Schema_exports.Array(Schema_exports.Number)),
-  ok: Schema_exports.optional(Schema_exports.Boolean),
-  bytes: Schema_exports.optional(Schema_exports.Number),
-  error: Schema_exports.optional(Schema_exports.String)
-});
 var HubSchema = Schema_exports.Struct({ hubId: Schema_exports.String, name: Schema_exports.String, port: Schema_exports.Number, addrs: Schema_exports.Array(Schema_exports.String), lastAddr: Schema_exports.String, secret: Schema_exports.String, pairedAt: Schema_exports.Number, lastSeen: Schema_exports.Number });
 var QueueSchema = Schema_exports.Struct({ tid: Schema_exports.String, hubId: Schema_exports.String, files: Schema_exports.Array(Schema_exports.instanceOf(File)), names: Schema_exports.optional(Schema_exports.Array(Schema_exports.String)), total: Schema_exports.optional(Schema_exports.Number), createdAt: Schema_exports.optional(Schema_exports.Number), failed: Schema_exports.optional(Schema_exports.Array(Schema_exports.Number)), status: Schema_exports.optional(Schema_exports.String) });
-var readError = async (response) => Schema_exports.decodeUnknownSync(Schema_exports.Struct({ error: Schema_exports.optional(Schema_exports.String) }))(await response.json().catch(() => ({})));
-var APP_VERSION = "1.0.4";
+var readError = async (response) => {
+  const decoded = Schema_exports.decodeUnknownOption(ErrorResponseSchema)(await response.json().catch(() => ({})));
+  return decoded._tag === "Some" ? decoded.value.error : "";
+};
+var APP_VERSION = "1.1.0";
 var HELLO_TIMEOUT = 4e3;
 var SWEEP_TIMEOUT = 1500;
 var SWEEP_CONCURRENCY = 32;
@@ -21600,7 +21773,7 @@ async function hello(addr, port = PORT, { timeout: timeout3 = HELLO_TIMEOUT, sig
       signal: anySignal(AbortSignal.timeout(timeout3), signal)
     });
     if (!res.ok) throw HttpError(res.status);
-    const j = Schema_exports.decodeUnknownSync(HelloSchema)(await res.json());
+    const j = Schema_exports.decodeUnknownSync(HelloResponseSchema)(await res.json());
     return j;
   } catch (err) {
     if (signal?.aborted === true) throw AbortedError();
@@ -21696,15 +21869,15 @@ async function pairAt(addr, p, { deviceId, name, os, fetch = defaultFetch, signa
   }
   if (!buf) {
     const err = await readError(res);
-    throw HttpError(res.status, err.error ?? "");
+    throw HttpError(res.status, err);
   }
   let json;
   try {
-    json = Schema_exports.decodeUnknownSync(WireSchema)((await open(key, responseAad("pair", iv), buf)).json);
+    json = Schema_exports.decodeUnknownSync(PairResponseSchema)((await open(key, responseAad("pair", iv), buf)).json);
   } catch {
     json = null;
   }
-  if (json?.secret === void 0 || json.secret.length === 0 || json.hubId !== void 0 && json.hubId !== p.hubId) throw PairError("bad-response", "The computer sent an invalid pairing response.");
+  if (json === null || json.secret.length === 0 || json.hubId !== p.hubId) throw PairError("bad-response", "The computer sent an invalid pairing response.");
   return { ...json, secret: json.secret };
 }
 async function pairWithHub(input, { deviceId, name, os, fetch = defaultFetch, signal, onStatus }) {
@@ -21829,11 +22002,11 @@ function createHubClient(engine, rec) {
     },
     /** Merge addresses / name learnt from hello or sync. */
     _learn(addrs, addr, name) {
-      const next = unique([addr, ...addrs ?? [], ...self.rec.addrs]).slice(0, 8);
+      const next = unique([addr, ...addrs, ...self.rec.addrs]).slice(0, 8);
       let changed = next.join() !== self.rec.addrs.join() || addr !== null && addr !== self.rec.lastAddr;
       self.update({ rec: { ...self.rec, addrs: next } });
       if (addr !== null) self.update({ rec: { ...self.rec, lastAddr: addr } });
-      if (name !== void 0 && name.length > 0 && name !== self.rec.name) {
+      if (name.length > 0 && name !== self.rec.name) {
         self.update({ rec: { ...self.rec, name: name.slice(0, 60) } });
         changed = true;
         self.engine._emit("hubs", {});
@@ -21906,14 +22079,14 @@ function createHubClient(engine, rec) {
       if (buf) {
         try {
           const opened = await open(key, responseAad(op, iv), buf);
-          return { ...opened, json: Schema_exports.decodeUnknownSync(WireSchema)(opened.json) };
+          return { ...opened, json: WireResponseDecoders[op](opened.json) };
         } catch (err2) {
           throw NetError(`${op} ${addr}: undecryptable response`, err2);
         }
       }
       const err = await readError(res);
-      if (res.status === 401) await self._checkUnpaired(addr, err.error ?? "");
-      throw HttpError(res.status, err.error ?? "");
+      if (res.status === 401) await self._checkUnpaired(addr, err);
+      throw HttpError(res.status, err);
     },
     /** A 401 only counts if the hub at that address really is ours (not some other hub after a DHCP shuffle). */
     async _checkUnpaired(addr, code) {
@@ -21982,7 +22155,7 @@ function createHubClient(engine, rec) {
             );
             self.syncBackoff.reset();
             self._learn(json.addrs, self.addr, json.name);
-            const outbox = json.outbox ?? [];
+            const outbox = json.outbox;
             const ok = await self._receive(outbox);
             if (!ok) await self._nap(self.syncBackoff.next());
             else if (!outbox.length && Date.now() - t0 < 1e3) await self._nap(1e3);
@@ -22030,7 +22203,7 @@ function createHubClient(engine, rec) {
                 null,
                 { timeout: DATA_TIMEOUT, backoff: self.syncBackoff }
               );
-              if (json.size !== void 0 && Number.isFinite(json.size)) size6 = json.size;
+              size6 = json.size;
               const chunk = binary.subarray(0, Math.max(0, Math.min(length, size6 - pos)));
               if (!chunk.byteLength) {
                 if (pos >= size6) break;
@@ -22077,7 +22250,7 @@ function createHubClient(engine, rec) {
         for (; ; ) {
           try {
             const { json: offer } = await self.callRetry("offer", { tid, files: meta }, null, { signal: sig });
-            const have = offer.received ?? [];
+            const have = offer.received;
             t.update({ acked: meta.map((m, i) => t.failed.includes(i) ? m.size : Math.min(Number(have[i]) || 0, m.size)) });
             t.update({ error: null });
             t.update({ lastAt: 0 });
@@ -22086,7 +22259,7 @@ function createHubClient(engine, rec) {
               if (!t.failed.includes(i)) await self._sendFile(t, i, sig, file);
             }
             const { json: end } = await self.callRetry("end", { tid }, null, { signal: sig });
-            if (end.ok === false && !t.failed.length) throw HttpError(409, "incomplete");
+            if (!end.ok && !t.failed.length) throw HttpError(409, "incomplete");
             await e._finish(t, t.failed.length ? "partial" : "done");
             return;
           } catch (err) {
@@ -22117,8 +22290,7 @@ function createHubClient(engine, rec) {
           return;
         }
         const { json } = await self.callRetry("put", { tid: t.tid, i, offset: pos }, buf, opts);
-        const bytes2 = Number(json.bytes);
-        pos = Number.isFinite(bytes2) ? Math.min(bytes2, size6) : pos + buf.byteLength;
+        pos = Math.min(json.bytes, size6);
         t.update({ acked: t.acked.map((acked, index2) => index2 === i ? pos : acked) });
         self.engine._progress(t);
       }

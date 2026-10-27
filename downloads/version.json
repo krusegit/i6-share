@@ -1,0 +1,15 @@
+{
+  "version": "1.1.0",
+  "artifacts": {
+    "linux-x64": {
+      "file": "i6-share-hub-linux-x64.tar.gz",
+      "sha256": "1920c6cac63f73fa020ea0651bcb95719788165c0ca596d7993d1fac34c84a12",
+      "size": 5563528
+    },
+    "linux-arm64": {
+      "file": "i6-share-hub-linux-arm64.tar.gz",
+      "sha256": "69e0b58f9d7e110a2e16011dfbab81431c9708d8459ca5ceba0fb614f21417bf",
+      "size": 5279212
+    }
+  }
+}

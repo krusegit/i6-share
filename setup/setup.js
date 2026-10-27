@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
-var __export = (target, all4) => {
-  for (var name in all4)
-    __defProp(target, name, { get: all4[name], enumerable: true });
+var __export = (target, all3) => {
+  for (var name in all3)
+    __defProp(target, name, { get: all3[name], enumerable: true });
 };
 
 // node_modules/effect/dist/Pipeable.js
@@ -1255,99 +1255,12 @@ var Prototype2 = (options) => makePrimitiveProto({
   [evaluate]: options.evaluate
 });
 
-// node_modules/effect/dist/Option.js
-var Option_exports = {};
-__export(Option_exports, {
-  Do: () => Do,
-  all: () => all,
-  andThen: () => andThen,
-  as: () => as,
-  asVoid: () => asVoid,
-  bind: () => bind2,
-  bindTo: () => bindTo2,
-  composeK: () => composeK,
-  contains: () => contains,
-  containsWith: () => containsWith,
-  exists: () => exists,
-  filter: () => filter,
-  filterMap: () => filterMap,
-  firstSomeOf: () => firstSomeOf,
-  flatMap: () => flatMap,
-  flatMapNullishOr: () => flatMapNullishOr,
-  flatten: () => flatten,
-  fromIterable: () => fromIterable,
-  fromNullOr: () => fromNullOr,
-  fromNullishOr: () => fromNullishOr,
-  fromUndefinedOr: () => fromUndefinedOr,
-  gen: () => gen,
-  getFailure: () => getFailure2,
-  getOrElse: () => getOrElse,
-  getOrNull: () => getOrNull,
-  getOrThrow: () => getOrThrow,
-  getOrThrowWith: () => getOrThrowWith,
-  getOrUndefined: () => getOrUndefined,
-  getSuccess: () => getSuccess2,
-  isNone: () => isNone2,
-  isOption: () => isOption2,
-  isSome: () => isSome2,
-  let: () => let_2,
-  lift2: () => lift2,
-  liftNullishOr: () => liftNullishOr,
-  liftPredicate: () => liftPredicate,
-  liftThrowable: () => liftThrowable,
-  makeCombinerFailFast: () => makeCombinerFailFast,
-  makeEquivalence: () => makeEquivalence,
-  makeOrder: () => makeOrder,
-  makeReducer: () => makeReducer,
-  makeReducerFailFast: () => makeReducerFailFast,
-  map: () => map,
-  match: () => match,
-  none: () => none2,
-  orElse: () => orElse,
-  orElseResult: () => orElseResult,
-  orElseSome: () => orElseSome,
-  partitionMap: () => partitionMap,
-  product: () => product,
-  productMany: () => productMany,
-  reduceCompact: () => reduceCompact,
-  some: () => some2,
-  tap: () => tap,
-  toArray: () => toArray,
-  toRefinement: () => toRefinement,
-  void: () => void_,
-  zipLeft: () => zipLeft,
-  zipRight: () => zipRight,
-  zipWith: () => zipWith
-});
-
-// node_modules/effect/dist/Combiner.js
-function make(combine2) {
-  return {
-    combine: combine2
-  };
-}
-
-// node_modules/effect/dist/Reducer.js
-function make2(combine2, initialValue, combineAll) {
-  return {
-    combine: combine2,
-    initialValue,
-    combineAll: combineAll ?? ((collection) => {
-      let out = initialValue;
-      for (const value3 of collection) {
-        out = combine2(out, value3);
-      }
-      return out;
-    })
-  };
-}
-
 // node_modules/effect/dist/Equivalence.js
-var make3 = (isEquivalent) => (self, that) => self === that || isEquivalent(self, that);
+var make = (isEquivalent) => (self, that) => self === that || isEquivalent(self, that);
 var isStrictEquivalent = (x, y) => x === y;
 var strictEqual = () => isStrictEquivalent;
 function Tuple(elements) {
-  return make3((self, that) => {
+  return make((self, that) => {
     if (self.length !== that.length) {
       return false;
     }
@@ -1360,7 +1273,7 @@ function Tuple(elements) {
   });
 }
 function Array_(item) {
-  return make3((self, that) => {
+  return make((self, that) => {
     if (self.length !== that.length) return false;
     for (let i = 0; i < self.length; i++) {
       if (!item(self[i], that[i])) return false;
@@ -1514,22 +1427,20 @@ var SuccessImpl = function(success) {
 };
 SuccessImpl.prototype = SuccessProto;
 var succeed = (success) => new SuccessImpl(success);
-var getFailure = (self) => isSuccess(self) ? none : some(self.failure);
-var getSuccess = (self) => isFailure(self) ? none : some(self.success);
 
 // node_modules/effect/dist/Order.js
-function make4(compare2) {
+function make2(compare2) {
   return (self, that) => self === that ? 0 : compare2(self, that);
 }
-var String2 = /* @__PURE__ */ make4((self, that) => self < that ? -1 : 1);
-var Number2 = /* @__PURE__ */ make4((self, that) => {
+var String2 = /* @__PURE__ */ make2((self, that) => self < that ? -1 : 1);
+var Number2 = /* @__PURE__ */ make2((self, that) => {
   if (globalThis.Number.isNaN(self) && globalThis.Number.isNaN(that)) return 0;
   if (globalThis.Number.isNaN(self)) return -1;
   if (globalThis.Number.isNaN(that)) return 1;
   return self < that ? -1 : 1;
 });
-var BigInt2 = /* @__PURE__ */ make4((self, that) => self < that ? -1 : 1);
-var mapInput = /* @__PURE__ */ dual(2, (self, f) => make4((b1, b2) => self(f(b1), f(b2))));
+var BigInt2 = /* @__PURE__ */ make2((self, that) => self < that ? -1 : 1);
+var mapInput = /* @__PURE__ */ dual(2, (self, f) => make2((b1, b2) => self(f(b1), f(b2))));
 var Date2 = /* @__PURE__ */ mapInput(Number2, (date) => date.getTime());
 var isLessThan = (O) => dual(2, (self, that) => O(self, that) === -1);
 var isGreaterThan = (O) => dual(2, (self, that) => O(self, that) === 1);
@@ -1546,32 +1457,10 @@ var match = /* @__PURE__ */ dual(2, (self, {
   onNone,
   onSome
 }) => isNone2(self) ? onNone() : onSome(self.value));
-var toRefinement = (f) => (a) => isSome2(f(a));
-var fromIterable = (collection) => {
-  for (const a of collection) {
-    return some2(a);
-  }
-  return none2();
-};
-var getSuccess2 = getSuccess;
-var getFailure2 = getFailure;
 var getOrElse = /* @__PURE__ */ dual(2, (self, onNone) => isNone2(self) ? onNone() : self.value);
-var orElse = /* @__PURE__ */ dual(2, (self, that) => isNone2(self) ? that() : self);
-var orElseSome = /* @__PURE__ */ dual(2, (self, onNone) => isNone2(self) ? some2(onNone()) : self);
-var orElseResult = /* @__PURE__ */ dual(2, (self, that) => isNone2(self) ? map(that(), succeed) : map(self, fail));
-var firstSomeOf = (collection) => {
-  let out = none2();
-  for (out of collection) {
-    if (isSome2(out)) {
-      return out;
-    }
-  }
-  return out;
-};
 var fromNullishOr = (a) => a == null ? none2() : some2(a);
 var fromUndefinedOr = (a) => a === void 0 ? none2() : some2(a);
 var fromNullOr = (a) => a === null ? none2() : some2(a);
-var liftNullishOr = (f) => (...a) => fromNullishOr(f(...a));
 var getOrNull = /* @__PURE__ */ getOrElse(constNull);
 var getOrUndefined = /* @__PURE__ */ getOrElse(constUndefined);
 var liftThrowable = (f) => (...a) => {
@@ -1581,138 +1470,10 @@ var liftThrowable = (f) => (...a) => {
     return none2();
   }
 };
-var getOrThrowWith = /* @__PURE__ */ dual(2, (self, onNone) => {
-  if (isSome2(self)) {
-    return self.value;
-  }
-  throw onNone();
-});
-var getOrThrow = /* @__PURE__ */ getOrThrowWith(() => new Error("getOrThrow called on a None"));
 var map = /* @__PURE__ */ dual(2, (self, f) => isNone2(self) ? none2() : some2(f(self.value)));
-var as = /* @__PURE__ */ dual(2, (self, b) => map(self, () => b));
-var asVoid = /* @__PURE__ */ as(void 0);
-var void_ = /* @__PURE__ */ some2(void 0);
 var flatMap = /* @__PURE__ */ dual(2, (self, f) => isNone2(self) ? none2() : f(self.value));
-var andThen = /* @__PURE__ */ dual(2, (self, f) => flatMap(self, (a) => {
-  const b = isFunction(f) ? f(a) : f;
-  return isOption2(b) ? b : some2(b);
-}));
-var flatMapNullishOr = /* @__PURE__ */ dual(2, (self, f) => isNone2(self) ? none2() : fromNullishOr(f(self.value)));
 var flatten = /* @__PURE__ */ flatMap(identity);
-var zipRight = /* @__PURE__ */ dual(2, (self, that) => flatMap(self, () => that));
-var zipLeft = /* @__PURE__ */ dual(2, (self, that) => tap(self, () => that));
-var composeK = /* @__PURE__ */ dual(2, (afb, bfc) => (a) => flatMap(afb(a), bfc));
-var tap = /* @__PURE__ */ dual(2, (self, f) => flatMap(self, (a) => map(f(a), () => a)));
-var product = /* @__PURE__ */ dual(2, (self, that) => isSome2(self) && isSome2(that) ? some2([self.value, that.value]) : none2());
-var productMany = /* @__PURE__ */ dual(2, (self, collection) => {
-  if (isNone2(self)) {
-    return none2();
-  }
-  const out = [self.value];
-  for (const o of collection) {
-    if (isNone2(o)) {
-      return none2();
-    }
-    out.push(o.value);
-  }
-  return some2(out);
-});
-var all = (input) => {
-  if (Symbol.iterator in input) {
-    const out2 = [];
-    for (const o of input) {
-      if (isNone2(o)) {
-        return none2();
-      }
-      out2.push(o.value);
-    }
-    return some2(out2);
-  }
-  const out = {};
-  for (const key of Object.keys(input)) {
-    const o = input[key];
-    if (isNone2(o)) {
-      return none2();
-    }
-    assignProperty(out, key, o.value);
-  }
-  return some2(out);
-};
-var zipWith = /* @__PURE__ */ dual(3, (self, that, f) => map(product(self, that), ([a, b]) => f(a, b)));
-var reduceCompact = /* @__PURE__ */ dual(3, (self, b, f) => {
-  let out = b;
-  for (const oa of self) {
-    if (isSome2(oa)) {
-      out = f(out, oa.value);
-    }
-  }
-  return out;
-});
-var toArray = (self) => isNone2(self) ? [] : [self.value];
-var partitionMap = /* @__PURE__ */ dual(2, (self, f) => {
-  if (isNone2(self)) {
-    return [none2(), none2()];
-  }
-  const e = f(self.value);
-  return isFailure(e) ? [none2(), some2(e.failure)] : [some2(e.success), none2()];
-});
-var filterMap = /* @__PURE__ */ dual(2, (self, f) => {
-  if (isNone2(self)) {
-    return none2();
-  }
-  const next = f(self.value);
-  return isSuccess(next) ? some2(next.success) : none2();
-});
 var filter = /* @__PURE__ */ dual(2, (self, predicate) => isNone2(self) ? none2() : predicate(self.value) ? some2(self.value) : none2());
-var makeEquivalence = (isEquivalent) => make3((x, y) => isNone2(x) ? isNone2(y) : isNone2(y) ? false : isEquivalent(x.value, y.value));
-var makeOrder = (O) => make4((self, that) => isSome2(self) ? isSome2(that) ? O(self.value, that.value) : 1 : -1);
-var lift2 = (f) => dual(2, (self, that) => zipWith(self, that, f));
-var liftPredicate = /* @__PURE__ */ dual(2, (b, predicate) => predicate(b) ? some2(b) : none2());
-var containsWith = (isEquivalent) => dual(2, (self, a) => isNone2(self) ? false : isEquivalent(self.value, a));
-var contains = /* @__PURE__ */ containsWith(/* @__PURE__ */ asEquivalence());
-var exists = /* @__PURE__ */ dual(2, (self, refinement) => isNone2(self) ? false : refinement(self.value));
-var bindTo2 = /* @__PURE__ */ bindTo(map);
-var let_2 = /* @__PURE__ */ let_(map);
-var bind2 = /* @__PURE__ */ bind(map, flatMap);
-var Do = /* @__PURE__ */ some2({});
-var gen = (...args2) => {
-  const f = args2.length === 1 ? args2[0] : args2[1].bind(args2[0]);
-  const iterator = f();
-  let state = iterator.next();
-  while (!state.done) {
-    const current = state.value;
-    if (isNone2(current)) {
-      return current;
-    }
-    state = iterator.next(current.value);
-  }
-  return some2(state.value);
-};
-function makeReducer(combiner) {
-  return make2((self, that) => {
-    if (isNone2(self)) return that;
-    if (isNone2(that)) return self;
-    return some2(combiner.combine(self.value, that.value));
-  }, none2());
-}
-function makeCombinerFailFast(combiner) {
-  return make((self, that) => {
-    if (isNone2(self) || isNone2(that)) return none2();
-    return some2(combiner.combine(self.value, that.value));
-  });
-}
-function makeReducerFailFast(reducer) {
-  const combine2 = makeCombinerFailFast(reducer).combine;
-  const initialValue = some2(reducer.initialValue);
-  return make2(combine2, initialValue, (collection) => {
-    let out = initialValue;
-    for (const value3 of collection) {
-      out = combine2(out, value3);
-      if (isNone2(out)) return out;
-    }
-    return out;
-  });
-}
 
 // node_modules/effect/dist/Context.js
 var ServiceTypeId = "~effect/Context/Service";
@@ -1756,7 +1517,7 @@ var ServiceProto = {
     return self;
   },
   context(self) {
-    return make5(this, self);
+    return make3(this, self);
   },
   use(f) {
     return withFiber((fiber3) => f(get(fiber3.context, this)));
@@ -1849,7 +1610,7 @@ var isContext = (u) => hasProperty(u, TypeId3);
 var isReference = (u) => !!u[ReferenceTypeId];
 var empty = () => emptyContext2;
 var emptyContext2 = /* @__PURE__ */ makeUnsafe(/* @__PURE__ */ new Map());
-var make5 = (key, service3) => makeUnsafe(/* @__PURE__ */ new Map([[key.key, service3]]));
+var make3 = (key, service3) => makeUnsafe(/* @__PURE__ */ new Map([[key.key, service3]]));
 var add = /* @__PURE__ */ dual(3, (self, key, service3) => addUnsafe(self, key.key, service3));
 var addUnsafe = (self, key, service3) => {
   const impl = self;
@@ -1948,17 +1709,17 @@ var match2 = /* @__PURE__ */ dual(2, (self, {
   onSuccess
 }) => isFailure2(self) ? onFailure(self.failure) : onSuccess(self.success));
 var getOrElse2 = /* @__PURE__ */ dual(2, (self, onFailure) => isFailure2(self) ? onFailure(self.failure) : self.success);
-var getOrThrowWith2 = /* @__PURE__ */ dual(2, (self, onFailure) => {
+var getOrThrowWith = /* @__PURE__ */ dual(2, (self, onFailure) => {
   if (isSuccess2(self)) {
     return self.success;
   }
   throw onFailure(self.failure);
 });
-var getOrThrow2 = /* @__PURE__ */ getOrThrowWith2(identity);
+var getOrThrow = /* @__PURE__ */ getOrThrowWith(identity);
 var flatMap2 = /* @__PURE__ */ dual(2, (self, f) => isFailure2(self) ? fail2(self.failure) : f(self.success));
 
 // node_modules/effect/dist/Tuple.js
-var makeEquivalence2 = Tuple;
+var makeEquivalence = Tuple;
 
 // node_modules/effect/dist/Iterable.js
 var findFirst = /* @__PURE__ */ dual(2, (self, f) => {
@@ -2023,14 +1784,14 @@ var isSubrecordBy = (equivalence) => dual(2, (self, that) => {
   }
   return true;
 });
-var makeEquivalence3 = (equivalence) => {
+var makeEquivalence2 = (equivalence) => {
   const is3 = isSubrecordBy(equivalence);
   return (self, that) => is3(self, that) && is3(that, self);
 };
 
 // node_modules/effect/dist/Array.js
 var Array2 = globalThis.Array;
-var fromIterable2 = (collection) => Array2.isArray(collection) ? collection : Array2.from(collection);
+var fromIterable = (collection) => Array2.isArray(collection) ? collection : Array2.from(collection);
 var append = /* @__PURE__ */ dual(2, (self, last) => [...self, last]);
 var isArray = Array2.isArray;
 var isArrayNonEmpty2 = isArrayNonEmpty;
@@ -2080,9 +1841,9 @@ var partition = /* @__PURE__ */ dual(2, (self, f) => {
   }
   return [passes, fails];
 });
-var makeEquivalence4 = Array_;
+var makeEquivalence3 = Array_;
 var dedupe = (self) => {
-  const input = fromIterable2(self);
+  const input = fromIterable(self);
   if (input.length < 2) {
     return [...input];
   }
@@ -2113,7 +1874,7 @@ var bigintNanosPerDay = /* @__PURE__ */ BigInt(864e11);
 var bigintNanosPerWeek = /* @__PURE__ */ BigInt(6048e11);
 var roundTiesAwayFromZero = (input) => BigInt(Math.sign(input) * Math.round(Math.abs(input)));
 var roundMillisToNanos = (millis2) => Number.isInteger(millis2) ? BigInt(millis2) * bigint1e6 : roundTiesAwayFromZero(millis2 * 1e6);
-var fromNanosNumber = (nanos2) => make6(Number.isFinite(nanos2) ? roundTiesAwayFromZero(nanos2) : nanos2);
+var fromNanosNumber = (nanos2) => make4(Number.isFinite(nanos2) ? roundTiesAwayFromZero(nanos2) : nanos2);
 var nanosToUnit = (nanos2, divisor) => {
   const value3 = Number(nanos2);
   if (Number.isFinite(value3)) return value3 / divisor;
@@ -2136,9 +1897,9 @@ var divideTiesAwayFromZero = (numerator, denominator) => {
 };
 var fromMillisString = (input, scale) => {
   const millis2 = Number(input) * scale;
-  if (!Number.isFinite(millis2)) return make6(millis2);
+  if (!Number.isFinite(millis2)) return make4(millis2);
   const nanos2 = parseNanos(input, BigInt(scale) * bigint1e6);
-  return make6(Number.isInteger(millis2) && BigInt(millis2) * bigint1e6 === nanos2 ? millis2 : nanos2);
+  return make4(Number.isInteger(millis2) && BigInt(millis2) * bigint1e6 === nanos2 ? millis2 : nanos2);
 };
 var DURATION_REGEXP = /^(-?\d+(?:\.\d+)?)\s+(nanos?|micros?|millis?|seconds?|minutes?|hours?|days?|weeks?)$/;
 var fromInputUnsafe = (input) => {
@@ -2202,7 +1963,7 @@ var fromInputUnsafe = (input) => {
           return infinity;
         }
         const nanos3 = input[0] * 1e9 + input[1];
-        return Number.isFinite(nanos3) && Number.isInteger(input[0]) && Number.isInteger(input[1]) ? make6(BigInt(input[0]) * bigint1e9 + BigInt(input[1])) : fromNanosNumber(nanos3);
+        return Number.isFinite(nanos3) && Number.isInteger(input[0]) && Number.isInteger(input[1]) ? make4(BigInt(input[0]) * bigint1e9 + BigInt(input[1])) : fromNanosNumber(nanos3);
       }
       const obj = input;
       let millis2 = 0;
@@ -2213,13 +1974,13 @@ var fromInputUnsafe = (input) => {
       if (obj.seconds) millis2 += obj.seconds * 1e3;
       if (obj.milliseconds) millis2 += obj.milliseconds;
       if (!obj.microseconds && !obj.nanoseconds) {
-        if (!Number.isFinite(millis2)) return make6(millis2);
+        if (!Number.isFinite(millis2)) return make4(millis2);
         const exact2 = sumObjectNanos(obj);
-        return exact2 === void 0 || BigInt(millis2) * bigint1e6 === exact2 ? make6(millis2) : make6(exact2);
+        return exact2 === void 0 || BigInt(millis2) * bigint1e6 === exact2 ? make4(millis2) : make4(exact2);
       }
       const nanos2 = millis2 * 1e6 + (obj.microseconds ?? 0) * 1e3 + (obj.nanoseconds ?? 0);
       const exact = Number.isFinite(nanos2) ? sumObjectNanos(obj) : void 0;
-      return exact === void 0 ? fromNanosNumber(nanos2) : make6(exact);
+      return exact === void 0 ? fromNanosNumber(nanos2) : make4(exact);
     }
   }
   return invalid(input);
@@ -2312,7 +2073,7 @@ var DurationProto = {
     return pipeArguments(this, arguments);
   }
 };
-var make6 = (input) => {
+var make4 = (input) => {
   const duration = Object.create(DurationProto);
   if (typeof input === "number") {
     if (isNaN(input) || input === 0 || Object.is(input, -0)) {
@@ -2371,17 +2132,17 @@ var abs = (self) => {
     case "NegativeInfinity":
       return infinity;
     case "Millis":
-      return self.value.millis < 0 ? make6(-self.value.millis) : self;
+      return self.value.millis < 0 ? make4(-self.value.millis) : self;
     case "Nanos":
-      return self.value.nanos < bigint0 ? make6(-self.value.nanos) : self;
+      return self.value.nanos < bigint0 ? make4(-self.value.nanos) : self;
   }
 };
-var zero = /* @__PURE__ */ make6(0);
-var infinity = /* @__PURE__ */ make6(Infinity);
-var negativeInfinity = /* @__PURE__ */ make6(-Infinity);
-var nanos = (nanos2) => make6(nanos2);
-var millis = (millis2) => make6(millis2);
-var seconds = (seconds2) => make6(seconds2 * 1e3);
+var zero = /* @__PURE__ */ make4(0);
+var infinity = /* @__PURE__ */ make4(Infinity);
+var negativeInfinity = /* @__PURE__ */ make4(-Infinity);
+var nanos = (nanos2) => make4(nanos2);
+var millis = (millis2) => make4(millis2);
+var seconds = (seconds2) => make4(seconds2 * 1e3);
 var toMillis = (self) => match3(fromInputUnsafe(self), {
   onMillis: identity,
   onNanos: (nanos2) => nanosToUnit(nanos2, 1e6),
@@ -2433,8 +2194,8 @@ var Equivalence = (self, that) => matchPair(self, that, {
   onInfinity: (self2, that2) => self2.value._tag === that2.value._tag
 });
 var subtract = /* @__PURE__ */ dual(2, (self, that) => matchPair(self, that, {
-  onMillis: (self2, that2) => make6(self2 - that2),
-  onNanos: (self2, that2) => make6(self2 - that2),
+  onMillis: (self2, that2) => make4(self2 - that2),
+  onNanos: (self2, that2) => make4(self2 - that2),
   onInfinity: (self2, that2) => {
     const s = self2.value._tag;
     const t = that2.value._tag;
@@ -2785,7 +2546,7 @@ var ParentSpan = class extends (/* @__PURE__ */ Service()(ParentSpanKey, {
   fiberCached: true
 })) {
 };
-var make7 = (options) => options;
+var make5 = (options) => options;
 var DisablePropagation = /* @__PURE__ */ Reference("effect/Tracer/DisablePropagation", {
   defaultValue: constFalse
 });
@@ -2800,7 +2561,7 @@ var Tracer = /* @__PURE__ */ Reference(TracerKey, {
   fiberCached: true,
   defaultValue: () => nativeTracer
 });
-var nativeTracer = /* @__PURE__ */ make7({
+var nativeTracer = /* @__PURE__ */ make5({
   span: (options) => new NativeSpan(options)
 });
 var NativeSpan = class {
@@ -3230,7 +2991,7 @@ var FiberImpl = class {
     }
     let cause = causeInterrupt(fiberId3);
     if (this.cache.stackFrame) {
-      cause = causeAnnotate(cause, make5(StackTraceKey, this.cache.stackFrame));
+      cause = causeAnnotate(cause, make3(StackTraceKey, this.cache.stackFrame));
     }
     if (annotations) {
       cause = causeAnnotate(cause, annotations);
@@ -3345,9 +3106,9 @@ var FiberImpl = class {
     while (true) {
       const op = this._stack.pop();
       if (!op) return void 0;
-      const all4 = op[contAll];
-      if (all4 !== void 0) {
-        const cont = all4.call(op, this);
+      const all3 = op[contAll];
+      if (all3 !== void 0) {
+        const cont = all3.call(op, this);
         if (cont) {
           ;
           cont[symbol4] = cont;
@@ -3478,7 +3239,7 @@ var fiberInterruptAs = /* @__PURE__ */ dual((args2) => hasProperty(args2[0], Fib
   let ann = fiberStackAnnotations(parent);
   ann = ann && annotations ? merge(ann, annotations) : ann ?? annotations;
   self.interruptUnsafe(fiberId3, ann);
-  return asVoid2(fiberAwait(self));
+  return asVoid(fiberAwait(self));
 }));
 var fiberInterruptAll = (fibers) => withFiber((parent) => {
   const annotations = fiberStackAnnotations(parent);
@@ -3487,7 +3248,7 @@ var fiberInterruptAll = (fibers) => withFiber((parent) => {
     fiber3.interruptUnsafe(parent.id, annotations);
     fiberArr.push(fiber3);
   }
-  return asVoid2(fiberAwaitAll(fiberArr));
+  return asVoid(fiberAwaitAll(fiberArr));
 });
 var succeed3 = exitSucceed;
 var failCause = exitFailCause;
@@ -3532,7 +3293,7 @@ var transposeOption = (self) => isNone2(self) ? succeedNone : map5(self.value, s
 var failCauseSync = (evaluate2) => suspend(() => failCause(evaluate2()));
 var die = (defect) => exitDie(defect);
 var failSync = (error) => suspend(() => fail3(error()));
-var void_2 = /* @__PURE__ */ succeed3(void 0);
+var void_ = /* @__PURE__ */ succeed3(void 0);
 var try_2 = (options) => {
   const evaluate2 = typeof options === "function" ? options : options.try;
   const catcher = typeof options === "function" ? (cause) => new UnknownError(cause, "An error occurred in Effect.try") : options.catch;
@@ -3623,7 +3384,7 @@ var asyncFinalizer = /* @__PURE__ */ makePrimitive({
 });
 var callback = (register) => callbackOptions(register, register.length >= 2);
 var never = /* @__PURE__ */ callback(constVoid);
-var gen2 = (...args2) => {
+var gen = (...args2) => {
   if (args2.length === 1) {
     const body2 = args2[0];
     return suspend(() => fromIteratorUnsafe(body2()));
@@ -3767,7 +3528,7 @@ var fromIteratorUnsafe = /* @__PURE__ */ (function() {
     return new IteratorImpl(iterator, initial);
   };
 })();
-var as2 = /* @__PURE__ */ dual(2, (self, value3) => new ContImpl(self, returnPayload, succeed3(value3)));
+var as = /* @__PURE__ */ dual(2, (self, value3) => new ContImpl(self, returnPayload, succeed3(value3)));
 var evaluateCont = function(fiber3) {
   fiber3._stack.push(this);
   return this[args];
@@ -3822,15 +3583,15 @@ var flip = (self) => matchEffect(self, {
   onFailure: succeed3,
   onSuccess: fail3
 });
-var andThen2 = /* @__PURE__ */ dual(2, (self, f) => new ContImpl(self, isEffect(f) ? returnPayload : andThenCont, f));
-var tap2 = /* @__PURE__ */ dual(2, (self, f) => new ContImpl(self, isEffect(f) ? tapEffectCont : tapCont, f));
-var asVoid2 = (self) => new ContImpl(self, returnPayload, exitVoid);
+var andThen = /* @__PURE__ */ dual(2, (self, f) => new ContImpl(self, isEffect(f) ? returnPayload : andThenCont, f));
+var tap = /* @__PURE__ */ dual(2, (self, f) => new ContImpl(self, isEffect(f) ? tapEffectCont : tapCont, f));
+var asVoid = (self) => new ContImpl(self, returnPayload, exitVoid);
 var sandbox = (self) => catchCause(self, fail3);
-var raceAll = (all4, options) => withFiber((parent) => {
+var raceAll = (all3, options) => withFiber((parent) => {
   const fibers = /* @__PURE__ */ new Set();
   onExitUnsafe(parent, () => fibers.size === 0 ? void 0 : fiberInterruptAll(fibers));
   return callback((resume) => {
-    const effects = fromIterable2(all4);
+    const effects = fromIterable(all3);
     const len = effects.length;
     let doneCount = 0;
     let done3 = false;
@@ -3866,13 +3627,13 @@ var raceAll = (all4, options) => withFiber((parent) => {
     }
   });
 });
-var raceAllFirst = (all4, options) => withFiber((parent) => {
+var raceAllFirst = (all3, options) => withFiber((parent) => {
   const fibers = /* @__PURE__ */ new Set();
   onExitUnsafe(parent, () => fibers.size === 0 ? void 0 : fiberInterruptAll(fibers));
   return callback((resume) => {
     let done3 = false;
     let i = 0;
-    for (const effect of all4) {
+    for (const effect of all3) {
       if (done3) break;
       const index2 = i++;
       const fiber3 = forkUnsafe(parent, effect, true, true, false);
@@ -3973,17 +3734,17 @@ var updateServiceScoped = (service3, update3, options) => uninterruptible(withFi
   fiber3.setContext(add(fiber3.context, service3, updated));
   return scopeAddFinalizerExit(getUnsafe(fiber3.context, scopeTag), (_) => {
     const currentOption = getOption(fiber3.context, service3);
-    if (isNone2(currentOption)) return void_2;
+    if (isNone2(currentOption)) return void_;
     const current = currentOption.value;
     let next;
     if (options?.reset === void 0) {
-      if (current !== updated) return void_2;
+      if (current !== updated) return void_;
       next = original;
     } else {
       next = options.reset(original, updated, current);
     }
     fiber3.setContext(add(fiber3.context, service3, next));
-    return void_2;
+    return void_;
   });
 }));
 var context = () => getContext;
@@ -4002,8 +3763,8 @@ var provideService = function() {
 };
 var provideServiceImpl = (self, service3, implementation) => updateContext(self, add(service3, implementation));
 var provideServiceEffect = /* @__PURE__ */ dual(3, (self, service3, acquire) => flatMap3(acquire, (implementation) => provideService(self, service3, implementation)));
-var zip = /* @__PURE__ */ dual((args2) => isEffect(args2[1]), (self, that, options) => zipWith2(self, that, (a, a2) => [a, a2], options));
-var zipWith2 = /* @__PURE__ */ dual((args2) => isEffect(args2[1]), (self, that, f, options) => options?.concurrent ? map5(all2([self, that], {
+var zip = /* @__PURE__ */ dual((args2) => isEffect(args2[1]), (self, that, options) => zipWith(self, that, (a, a2) => [a, a2], options));
+var zipWith = /* @__PURE__ */ dual((args2) => isEffect(args2[1]), (self, that, f, options) => options?.concurrent ? map5(all([self, that], {
   concurrency: 2
 }), ([a, a2]) => f(a, a2)) : flatMap3(self, (a) => map5(that, (a2) => f(a, a2))));
 var filterOrFail = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, predicate, orFailWith) => filterOrElse(self, predicate, orFailWith ? (a) => fail3(orFailWith(a)) : () => fail3(new NoSuchElementError())));
@@ -4011,7 +3772,7 @@ var when = /* @__PURE__ */ dual(2, (self, condition) => flatMap3(condition, (pas
 var replicate = /* @__PURE__ */ dual(2, (self, n) => Array.from({
   length: n
 }, () => self));
-var replicateEffect = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, n, options) => all2(replicate(self, n), options));
+var replicateEffect = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, n, options) => all(replicate(self, n), options));
 var forever = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, options) => whileLoop({
   while: constTrue,
   body: constant(options?.disableYield ? self : flatMap3(self, (_) => yieldNow)),
@@ -4043,63 +3804,63 @@ var catchNoSuchElement = (self) => matchEffect(self, {
   onSuccess: succeedSome
 });
 var catchDefect = /* @__PURE__ */ dual(2, (self, f) => catchCauseFilter(self, findDefect, f));
-var tapCause = /* @__PURE__ */ dual(2, (self, f) => catchCause(self, (cause) => andThen2(f(cause), failCause(cause))));
-var tapCauseIf = /* @__PURE__ */ dual(3, (self, predicate, f) => catchCauseIf(self, predicate, (cause) => andThen2(f(cause), failCause(cause))));
+var tapCause = /* @__PURE__ */ dual(2, (self, f) => catchCause(self, (cause) => andThen(f(cause), failCause(cause))));
+var tapCauseIf = /* @__PURE__ */ dual(3, (self, predicate, f) => catchCauseIf(self, predicate, (cause) => andThen(f(cause), failCause(cause))));
 var tapCauseFilter = /* @__PURE__ */ dual(3, (self, filter8, f) => catchCause(self, (cause) => {
   const result3 = filter8(cause);
   if (isFailure2(result3)) {
     return failCause(cause);
   }
-  return andThen2(f(result3.success, cause), failCause(cause));
+  return andThen(f(result3.success, cause), failCause(cause));
 }));
 var tapError = /* @__PURE__ */ dual(2, (self, f) => tapCauseFilter(self, findError, (e) => f(e)));
 var tapErrorTag = /* @__PURE__ */ dual(3, (self, k, f) => {
   const predicate = Array.isArray(k) ? (e) => hasProperty(e, "_tag") && k.includes(e._tag) : isTagged(k);
-  return tapError(self, (error) => predicate(error) ? f(error) : void_2);
+  return tapError(self, (error) => predicate(error) ? f(error) : void_);
 });
 var tapDefect = /* @__PURE__ */ dual(2, (self, f) => tapCauseFilter(self, findDefect, (_) => f(_)));
-var catchIf = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, predicate, f, orElse2) => catchCause(self, (cause) => {
+var catchIf = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, predicate, f, orElse) => catchCause(self, (cause) => {
   const error = findRecoverableError(cause);
   if (isFailure2(error)) return failCause(error.failure);
   if (!predicate(error.success)) {
-    return orElse2 ? orElse2(error.success) : failCause(cause);
+    return orElse ? orElse(error.success) : failCause(cause);
   }
   return f(error.success);
 }));
-var catchFilter = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, filter8, f, orElse2) => catchCause(self, (cause) => {
+var catchFilter = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, filter8, f, orElse) => catchCause(self, (cause) => {
   const error = findRecoverableError(cause);
   if (isFailure2(error)) return failCause(error.failure);
   const result3 = filter8(error.success);
   if (isFailure2(result3)) {
-    return orElse2 ? orElse2(result3.failure) : failCause(cause);
+    return orElse ? orElse(result3.failure) : failCause(cause);
   }
   return f(result3.success);
 }));
-var catchTag = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, k, f, orElse2) => {
+var catchTag = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, k, f, orElse) => {
   const pred = Array.isArray(k) ? (e) => hasProperty(e, "_tag") && k.includes(e._tag) : isTagged(k);
-  return catchIf(self, pred, f, orElse2);
+  return catchIf(self, pred, f, orElse);
 });
-var catchTags = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, cases, orElse2) => {
+var catchTags = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, cases, orElse) => {
   let keys3;
   return catchFilter(self, (e) => {
     keys3 ??= Object.keys(cases);
     return hasProperty(e, "_tag") && isString(e["_tag"]) && keys3.includes(e["_tag"]) ? succeed2(e) : fail2(e);
-  }, (e) => cases[e["_tag"]](e), orElse2);
+  }, (e) => cases[e["_tag"]](e), orElse);
 });
-var catchReason = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, errorTag, reasonTag, f, orElse2) => catchIf(self, (e) => isTagged(e, errorTag) && hasProperty(e, "reason") && (orElse2 !== void 0 || isTagged(e.reason, reasonTag)), (e) => {
+var catchReason = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, errorTag, reasonTag, f, orElse) => catchIf(self, (e) => isTagged(e, errorTag) && hasProperty(e, "reason") && (orElse !== void 0 || isTagged(e.reason, reasonTag)), (e) => {
   const reason = e.reason;
   if (isTagged(reason, reasonTag)) return f(reason, e);
-  return orElse2 ? orElse2(reason, e) : fail3(e);
+  return orElse ? orElse(reason, e) : fail3(e);
 }));
-var catchReasons = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, errorTag, cases, orElse2) => {
+var catchReasons = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, errorTag, cases, orElse) => {
   let keys3;
-  return catchIf(self, (e) => isTagged(e, errorTag) && hasProperty(e, "reason") && hasProperty(e.reason, "_tag") && isString(e.reason._tag) && (orElse2 !== void 0 || (keys3 ??= Object.keys(cases)).includes(e.reason._tag)), (e) => {
+  return catchIf(self, (e) => isTagged(e, errorTag) && hasProperty(e, "reason") && hasProperty(e.reason, "_tag") && isString(e.reason._tag) && (orElse !== void 0 || (keys3 ??= Object.keys(cases)).includes(e.reason._tag)), (e) => {
     const reason = e.reason;
     keys3 ??= Object.keys(cases);
     if (keys3.includes(reason._tag)) {
       return cases[reason._tag](reason, e);
     }
-    return orElse2 ? orElse2(reason, e) : fail3(e);
+    return orElse ? orElse(reason, e) : fail3(e);
   });
 });
 var unwrapReason = /* @__PURE__ */ dual(2, (self, errorTag) => catchFilter(self, (e) => {
@@ -4132,8 +3893,8 @@ var eventually = (self) => catch_(self, (_) => flatMap3(yieldNow, () => eventual
 var ignore = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, options) => {
   if (!options?.log) {
     return matchEffect(self, {
-      onFailure: (_) => void_2,
-      onSuccess: (_) => void_2
+      onFailure: (_) => void_,
+      onSuccess: (_) => void_
     });
   }
   const logEffect = logWithLevel(options.log === true ? void 0 : options.log);
@@ -4142,20 +3903,20 @@ var ignore = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, options)
       const error = findRecoverableError(cause);
       return isFailure2(error) ? failCause(error.failure) : options.message === void 0 ? logEffect(cause) : logEffect(options.message, cause);
     },
-    onSuccess: (_) => void_2
+    onSuccess: (_) => void_
   });
 });
 var ignoreCause = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, options) => {
   if (!options?.log) {
     return matchCauseEffect(self, {
-      onFailure: (_) => void_2,
-      onSuccess: (_) => void_2
+      onFailure: (_) => void_,
+      onSuccess: (_) => void_
     });
   }
   const logEffect = logWithLevel(options.log === true ? void 0 : options.log);
   return matchCauseEffect(self, {
     onFailure: (cause) => options.message === void 0 ? logEffect(cause) : logEffect(options.message, cause),
-    onSuccess: (_) => void_2
+    onSuccess: (_) => void_
   });
 });
 var option = (self) => match4(self, {
@@ -4252,7 +4013,7 @@ var isSuccess3 = /* @__PURE__ */ matchEager({
   onFailure: () => false,
   onSuccess: () => true
 });
-var delay = /* @__PURE__ */ dual(2, (self, duration) => andThen2(sleep(duration), self));
+var delay = /* @__PURE__ */ dual(2, (self, duration) => andThen(sleep(duration), self));
 var timeoutOrElse = /* @__PURE__ */ dual(2, (self, options) => flatMap3(timeoutOption(self, options.duration), (option3) => isNone2(option3) ? options.orElse() : succeed3(option3.value)));
 var timeoutErrorFromDuration = (duration) => new TimeoutError(`Operation timed out after '${format2(duration)}'`);
 var timeout = /* @__PURE__ */ dual(2, (self, duration) => {
@@ -4262,7 +4023,7 @@ var timeout = /* @__PURE__ */ dual(2, (self, duration) => {
     orElse: () => fail3(timeoutErrorFromDuration(decoded))
   });
 });
-var timeoutOption = /* @__PURE__ */ dual(2, (self, duration) => raceFirst(asSome(self), as2(sleep(duration), none2())));
+var timeoutOption = /* @__PURE__ */ dual(2, (self, duration) => raceFirst(asSome(self), as(sleep(duration), none2())));
 var timed = (self) => clockWith((clock) => {
   const start = clock.monotonicTimeNanosUnsafe();
   return map5(self, (a) => [nanos(clock.monotonicTimeNanosUnsafe() - start), a]);
@@ -4272,7 +4033,7 @@ var ScopeCloseableTypeId = "~effect/Scope/Closeable";
 var scopeTag = /* @__PURE__ */ Service("effect/Scope");
 var scopeClose = (self, exit_) => withFiber((fiber3) => {
   fiberEnterUninterruptibleUnsafe(fiber3);
-  return scopeCloseUnsafe(self, exit_) ?? void_2;
+  return scopeCloseUnsafe(self, exit_) ?? void_;
 });
 var scopeCloseUnsafe = (self, exit_) => {
   const state = self.state;
@@ -4335,7 +4096,7 @@ var scopeAddFinalizerExit = (scope3, finalizer) => {
       return finalizer(scope3.state.exit);
     }
     scopeAddFinalizerUnsafe(scope3, {}, finalizer);
-    return void_2;
+    return void_;
   });
 };
 var scopeAddFinalizerUnsafe = (scope3, key, finalizer) => {
@@ -4394,9 +4155,9 @@ var scoped = (self) => withFiber((fiber3) => {
 });
 var scopedWith = (f) => suspend(() => {
   const scope3 = scopeMakeUnsafe();
-  return onExit(f(scope3), (exit3) => suspend(() => scopeCloseUnsafe(scope3, exit3) ?? void_2));
+  return onExit(f(scope3), (exit3) => suspend(() => scopeCloseUnsafe(scope3, exit3) ?? void_));
 });
-var acquireRelease = (acquire, release, options) => contextWith((context3) => uninterruptibleMask((restore) => flatMap3(scope, (scope3) => tap2(options?.interruptible ? restore(acquire) : acquire, (a) => scopeAddFinalizerExit(scope3, (exit3) => provideContext(release(a, exit3), context3))))));
+var acquireRelease = (acquire, release, options) => contextWith((context3) => uninterruptibleMask((restore) => flatMap3(scope, (scope3) => tap(options?.interruptible ? restore(acquire) : acquire, (a) => scopeAddFinalizerExit(scope3, (exit3) => provideContext(release(a, exit3), context3))))));
 var addFinalizer = (finalizer) => flatMap3(scope, (scope3) => contextWith((context3) => scopeAddFinalizerExit(scope3, (exit3) => provideContext(finalizer(exit3), context3))));
 var OnExitImpl = /* @__PURE__ */ (function() {
   const Proto8 = /* @__PURE__ */ makePrimitiveProto({
@@ -4449,13 +4210,13 @@ var onExit = /* @__PURE__ */ dual(2, onExitPrimitive);
 var ensuring = /* @__PURE__ */ dual(2, (self, finalizer) => onExit(self, (_) => finalizer));
 var onExitIf = /* @__PURE__ */ dual(3, (self, predicate, f) => onExit(self, (exit3) => {
   if (!predicate(exit3)) {
-    return void_2;
+    return void_;
   }
   return f(exit3);
 }));
 var onExitFilter = /* @__PURE__ */ dual(3, (self, filter8, f) => onExit(self, (exit3) => {
   const b = filter8(exit3);
-  return isFailure2(b) ? void_2 : f(b.success, exit3);
+  return isFailure2(b) ? void_ : f(b.success, exit3);
 }));
 var onError = /* @__PURE__ */ dual(2, (self, f) => onExitFilter(self, exitFilterCause, f));
 var onErrorIf = /* @__PURE__ */ dual(3, (self, predicate, f) => onExitIf(self, (exit3) => {
@@ -4466,10 +4227,10 @@ var onErrorIf = /* @__PURE__ */ dual(3, (self, predicate, f) => onExitIf(self, (
 }, (exit3) => f(exit3.cause)));
 var onErrorFilter = /* @__PURE__ */ dual(3, (self, filter8, f) => onExit(self, (exit3) => {
   if (exit3._tag !== "Failure") {
-    return void_2;
+    return void_;
   }
   const result3 = filter8(exit3.cause);
-  return isFailure2(result3) ? void_2 : f(result3.success, exit3.cause);
+  return isFailure2(result3) ? void_ : f(result3.success, exit3.cause);
 }));
 var onInterrupt = /* @__PURE__ */ dual(2, (self, finalizer) => onErrorFilter(causeFilterInterruptors, finalizer)(self));
 var acquireUseRelease = (acquire, use, release) => uninterruptibleMask((restore) => flatMap3(acquire, (a) => onExitPrimitive(suspend(() => restore(use(a))), (exit3) => release(a, exit3), true)));
@@ -4568,7 +4329,7 @@ var interruptibleMask = (f) => withFiber((fiber3) => {
   return interrupted ?? effect;
 });
 var abortSignal = /* @__PURE__ */ map5(/* @__PURE__ */ acquireRelease(/* @__PURE__ */ sync(() => new AbortController()), (controller) => sync(() => controller.abort())), (_) => _.signal);
-var all2 = (arg, options) => {
+var all = (arg, options) => {
   if (isIterable(arg)) {
     return options?.mode === "result" ? forEach(arg, result, options) : forEach(arg, identity, options);
   } else if (options?.discard) {
@@ -4580,7 +4341,7 @@ var all2 = (arg, options) => {
 };
 var partition2 = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect(args2[0]), (elements, f, options) => map5(forEach(elements, (a, i) => result(f(a, i)), options), (results2) => partition(results2, identity)));
 var reduce = /* @__PURE__ */ dual(3, (elements, zero3, f) => {
-  const arr = fromIterable2(elements);
+  const arr = fromIterable(elements);
   if (arr.length === 0) return sync(zero3);
   return suspend(() => {
     let index2 = 0;
@@ -4601,7 +4362,7 @@ var validate = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect
   if (isArrayNonEmpty2(fails)) {
     return fail3(fails);
   }
-  return options?.discard ? void_2 : succeed3(passes);
+  return options?.discard ? void_ : succeed3(passes);
 }));
 var findFirst3 = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect(args2[0]), (elements, predicate) => suspend(() => {
   const iterator = elements[Symbol.iterator]();
@@ -4662,10 +4423,10 @@ var forEach = /* @__PURE__ */ dual((args2) => typeof args2[1] === "function", (i
   if (concurrency === 1) {
     return forEachSequential(iterable, f, options);
   }
-  const items = fromIterable2(iterable);
+  const items = fromIterable(iterable);
   let length = items.length;
   if (length === 0) {
-    return options?.discard ? void_2 : succeed3([]);
+    return options?.discard ? void_ : succeed3([]);
   }
   const out = options?.discard ? void 0 : new Array(length);
   const eff = forEachConcurrent({
@@ -4674,7 +4435,7 @@ var forEach = /* @__PURE__ */ dual((args2) => typeof args2[1] === "function", (i
   }, items, {
     concurrency
   });
-  return eff ? as2(eff, out) : succeed3(out);
+  return eff ? as(eff, out) : succeed3(out);
 }));
 var head = (self) => flatMap3(self, (elements) => {
   const result3 = elements[Symbol.iterator]().next();
@@ -4685,7 +4446,7 @@ var forEachSequential = (iterable, f, options) => suspend(() => {
   const iterator = iterable[Symbol.iterator]();
   let state = iterator.next();
   let index2 = 0;
-  return as2(whileLoop({
+  return as(whileLoop({
     while: () => !state.done,
     body: () => f(state.value, index2++),
     step: (b) => {
@@ -4698,7 +4459,7 @@ var resolveConcurrency = (concurrency) => concurrency === "unbounded" ? Number.P
 var iterateEager = () => (options) => {
   const onItem = options.onItem;
   const step = options.step;
-  const resumeSequential = (state, items, index2, end, effect) => flatMap3(exit(effect), (itemExit) => step(state, items[index2], itemExit, index2) ?? runSequential(state, items, index2 + 1, end) ?? void_2);
+  const resumeSequential = (state, items, index2, end, effect) => flatMap3(exit(effect), (itemExit) => step(state, items[index2], itemExit, index2) ?? runSequential(state, items, index2 + 1, end) ?? void_);
   const runSequential = (state, items, index2 = 0, end = items.length) => {
     for (; index2 < end; index2++) {
       const item = items[index2];
@@ -4754,7 +4515,7 @@ var iterateConcurrentImpl = (options) => {
             if (result3) return cb(result3);
             return suspend(() => {
               terminal ??= exitVoid;
-              return flatMap3(fibers ? fiberInterruptAll(fibers) : void_2, () => terminal?._tag === "Failure" ? terminal : void_2);
+              return flatMap3(fibers ? fiberInterruptAll(fibers) : void_, () => terminal?._tag === "Failure" ? terminal : void_);
             });
           });
         } else {
@@ -4789,7 +4550,7 @@ var iterateConcurrentImpl = (options) => {
                 const eff2 = go();
                 if (eff2) resume(eff2);
               } else if (done3 && fibers.size === 0) {
-                resume(terminal ?? void_2);
+                resume(terminal ?? void_);
               }
             } catch (error) {
               resume(failDefect(error));
@@ -4815,7 +4576,7 @@ var iterateConcurrentImpl = (options) => {
         if (!fibers) {
           return exitVoid;
         } else if (fibers.size === 0) {
-          resume(void_2);
+          resume(void_);
         }
       }
     };
@@ -4834,10 +4595,10 @@ var forEachConcurrent = /* @__PURE__ */ iterateConcurrentImpl({
     }
   }
 });
-var filterOrElse = /* @__PURE__ */ dual(3, (self, predicate, orElse2) => flatMap3(self, (a) => predicate(a) ? succeed3(a) : orElse2(a)));
-var filterMapOrElse = /* @__PURE__ */ dual(3, (self, filter8, orElse2) => flatMap3(self, (a) => {
+var filterOrElse = /* @__PURE__ */ dual(3, (self, predicate, orElse) => flatMap3(self, (a) => predicate(a) ? succeed3(a) : orElse(a)));
+var filterMapOrElse = /* @__PURE__ */ dual(3, (self, filter8, orElse) => flatMap3(self, (a) => {
   const result3 = filter8(a);
-  return isFailure2(result3) ? orElse2(result3.failure) : succeed3(result3.success);
+  return isFailure2(result3) ? orElse(result3.failure) : succeed3(result3.success);
 }));
 var filterMapOrFail = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, filter8, orFailWith) => filterMapOrElse(self, filter8, orFailWith ? (x) => fail3(orFailWith(x)) : () => fail3(new NoSuchElementError())));
 var filter3 = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect(args2[0]), (elements, predicate, options) => map5(forEach(elements, (a, i) => {
@@ -4847,7 +4608,7 @@ var filter3 = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect(
   }
   return map5(result3, (keep) => keep ? some2(a) : none2());
 }, options), getSomes));
-var filterMap2 = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect(args2[0]), (elements, filter8) => suspend(() => {
+var filterMap = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect(args2[0]), (elements, filter8) => suspend(() => {
   const out = [];
   for (const a of elements) {
     const result3 = filter8(a);
@@ -4859,7 +4620,7 @@ var filterMap2 = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffe
 }));
 var filterMapEffect = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !isEffect(args2[0]), (elements, filter8, options) => suspend(() => {
   const out = [];
-  return as2(forEach(elements, (a) => map5(filter8(a), (result3) => {
+  return as(forEach(elements, (a) => map5(filter8(a), (result3) => {
     if (isSuccess2(result3)) {
       out.push(result3.success);
     }
@@ -4868,10 +4629,10 @@ var filterMapEffect = /* @__PURE__ */ dual((args2) => isIterable(args2[0]) && !i
     concurrency: options?.concurrency
   }), out);
 }));
-var Do2 = /* @__PURE__ */ succeed3({});
-var bindTo3 = /* @__PURE__ */ bindTo(map5);
-var bind3 = /* @__PURE__ */ bind(map5, flatMap3);
-var let_3 = /* @__PURE__ */ let_(map5);
+var Do = /* @__PURE__ */ succeed3({});
+var bindTo2 = /* @__PURE__ */ bindTo(map5);
+var bind2 = /* @__PURE__ */ bind(map5, flatMap3);
+var let_2 = /* @__PURE__ */ let_(map5);
 var forkChild = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, options) => withFiber((fiber3) => {
   interruptChildrenPatch();
   return succeed3(forkUnsafe(fiber3, self, options?.startImmediately, false, options?.uninterruptible ?? false));
@@ -4899,15 +4660,15 @@ var awaitAllChildren = (self) => withFiber((fiber3) => {
   return onExitPrimitive(self, (_) => {
     let children = fiber3._children;
     if (children === void 0 || children.size === 0) {
-      return void_2;
+      return void_;
     } else if (initialChildren) {
       children = filter2(children, (child) => !initialChildren.has(child));
     }
-    const awaitChildren = asVoid2(fiberAwaitAll(children));
+    const awaitChildren = asVoid(fiberAwaitAll(children));
     return isInterruptible ? interruptible(awaitChildren) : awaitChildren;
   });
 });
-var fiberScopeFinalizer = (fiber3) => () => withFiber((current) => current === fiber3 ? void_2 : fiberInterrupt(fiber3));
+var fiberScopeFinalizer = (fiber3) => () => withFiber((current) => current === fiber3 ? void_ : fiberInterrupt(fiber3));
 var forkIn = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, scope3, options) => withFiber((parent) => {
   const fiber3 = scope3.state._tag === "Closed" ? new FiberImpl(parent.context) : forkUnsafe(parent, self, options?.startImmediately, true, options?.uninterruptible);
   if (!fiber3._exit) {
@@ -5075,7 +4836,7 @@ var makeSpanScoped = (name, options) => uninterruptible(withFiber((fiber3) => {
   const span = makeSpanUnsafe(fiber3, name, options ?? {});
   const clock = fiber3.getRef(ClockRef);
   const timingEnabled = fiber3.getRef(TracerTimingEnabled);
-  return as2(scopeAddFinalizerExit(scope3, (exit3) => endSpan(span, exit3, clock, timingEnabled)), span);
+  return as(scopeAddFinalizerExit(scope3, (exit3) => endSpan(span, exit3, clock, timingEnabled)), span);
 }));
 var withSpanScoped = function() {
   const dataFirst = typeof arguments[0] !== "string";
@@ -5172,7 +4933,7 @@ var annotateCurrentSpan = (...args2) => withFiber((fiber3) => {
       span.attribute(args2[0], args2[1]);
     }
   }
-  return void_2;
+  return void_;
 });
 var currentSpan = /* @__PURE__ */ withFiber((fiber3) => {
   const span = fiber3.currentSpanLocal;
@@ -5203,7 +4964,7 @@ var ClockImpl = class {
     if (millis2 <= 0) return yieldNow;
     else if (!Number.isFinite(millis2)) return never;
     return callback((resume) => {
-      const continuation = millis2 > MAX_TIMER_MILLIS ? this.sleepMillis(millis2 - MAX_TIMER_MILLIS) : void_2;
+      const continuation = millis2 > MAX_TIMER_MILLIS ? this.sleepMillis(millis2 - MAX_TIMER_MILLIS) : void_;
       const handle = setTimeout(() => resume(continuation), Math.min(millis2, MAX_TIMER_MILLIS));
       return sync(() => clearTimeout(handle));
     });
@@ -5353,7 +5114,7 @@ var annotateLogsScoped = function() {
         }
       }
       fiber3.setContext(add(fiber3.context, CurrentLogAnnotations, next2));
-      return void_2;
+      return void_;
     });
   }));
 };
@@ -5398,7 +5159,7 @@ var logWithLevel = (level) => (...message) => {
   return withFiber((fiber3) => {
     const logLevel = level ?? fiber3.cache.logLevel;
     if (isLogLevelGreaterThan(fiber3.cache.minimumLogLevel, logLevel)) {
-      return void_2;
+      return void_;
     }
     const clock = fiber3.getRef(ClockRef);
     const loggers = fiber3.getRef(CurrentLoggers);
@@ -5414,7 +5175,7 @@ var logWithLevel = (level) => (...message) => {
         });
       }
     }
-    return void_2;
+    return void_;
   });
 };
 var colors = {
@@ -5492,7 +5253,7 @@ function interruptChildrenPatch() {
 var undefined_ = /* @__PURE__ */ succeed3(void 0);
 var withErrorReporting = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, options) => onError(self, (cause) => withFiber((fiber3) => {
   reportCauseUnsafe(fiber3, cause, options?.defectsOnly);
-  return void_2;
+  return void_;
 })));
 var reportCauseUnsafe = (fiber3, cause, defectsOnly) => {
   const reporters = fiber3.getRef(CurrentErrorReporters);
@@ -5524,7 +5285,7 @@ var IllegalArgumentError2 = IllegalArgumentError;
 // node_modules/effect/dist/Effect.js
 var Effect_exports = {};
 __export(Effect_exports, {
-  Do: () => Do3,
+  Do: () => Do2,
   Transaction: () => Transaction,
   TypeId: () => TypeId13,
   abortSignal: () => abortSignal2,
@@ -5532,18 +5293,18 @@ __export(Effect_exports, {
   acquireRelease: () => acquireRelease2,
   acquireUseRelease: () => acquireUseRelease2,
   addFinalizer: () => addFinalizer2,
-  all: () => all3,
-  andThen: () => andThen3,
+  all: () => all2,
+  andThen: () => andThen2,
   annotateCurrentSpan: () => annotateCurrentSpan2,
   annotateLogs: () => annotateLogs,
   annotateLogsScoped: () => annotateLogsScoped2,
   annotateSpans: () => annotateSpans2,
-  as: () => as3,
+  as: () => as2,
   asSome: () => asSome2,
-  asVoid: () => asVoid3,
+  asVoid: () => asVoid2,
   awaitAllChildren: () => awaitAllChildren2,
-  bind: () => bind4,
-  bindTo: () => bindTo4,
+  bind: () => bind3,
+  bindTo: () => bindTo3,
   cached: () => cached2,
   cachedInvalidateWithTTL: () => cachedInvalidateWithTTL2,
   cachedWithTTL: () => cachedWithTTL2,
@@ -5579,7 +5340,7 @@ __export(Effect_exports, {
   fiber: () => fiber2,
   fiberId: () => fiberId2,
   filter: () => filter4,
-  filterMap: () => filterMap3,
+  filterMap: () => filterMap2,
   filterMapEffect: () => filterMapEffect2,
   filterMapOrElse: () => filterMapOrElse2,
   filterMapOrFail: () => filterMapOrFail2,
@@ -5604,7 +5365,7 @@ __export(Effect_exports, {
   fromNullishOr: () => fromNullishOr3,
   fromOption: () => fromOption3,
   fromResult: () => fromResult2,
-  gen: () => gen3,
+  gen: () => gen2,
   head: () => head2,
   ignore: () => ignore2,
   ignoreCause: () => ignoreCause2,
@@ -5614,7 +5375,7 @@ __export(Effect_exports, {
   isEffect: () => isEffect2,
   isFailure: () => isFailure5,
   isSuccess: () => isSuccess5,
-  let: () => let_4,
+  let: () => let_3,
   linkSpans: () => linkSpans2,
   log: () => log,
   logDebug: () => logDebug,
@@ -5703,7 +5464,7 @@ __export(Effect_exports, {
   succeedSome: () => succeedSome2,
   suspend: () => suspend2,
   sync: () => sync2,
-  tap: () => tap3,
+  tap: () => tap2,
   tapCause: () => tapCause2,
   tapCauseFilter: () => tapCauseFilter2,
   tapCauseIf: () => tapCauseIf2,
@@ -5734,7 +5495,7 @@ __export(Effect_exports, {
   updateServiceScoped: () => updateServiceScoped2,
   useSpan: () => useSpan2,
   validate: () => validate2,
-  void: () => void_4,
+  void: () => void_3,
   when: () => when2,
   whileLoop: () => whileLoop2,
   withErrorReporting: () => withErrorReporting2,
@@ -5752,7 +5513,7 @@ __export(Effect_exports, {
   yieldNow: () => yieldNow2,
   yieldNowWith: () => yieldNowWith2,
   zip: () => zip2,
-  zipWith: () => zipWith3
+  zipWith: () => zipWith2
 });
 
 // node_modules/effect/dist/Exit.js
@@ -5760,7 +5521,7 @@ var isExit2 = isExit;
 var succeed4 = exitSucceed;
 var failCause2 = exitFailCause;
 var fail4 = exitFail;
-var void_3 = exitVoid;
+var void_2 = exitVoid;
 var isSuccess4 = exitIsSuccess;
 var isFailure4 = exitIsFailure;
 
@@ -5823,7 +5584,7 @@ var makeMemoMapEntry = (memoMap, layer) => {
     deferred: makeUnsafe2(),
     scope: makeUnsafe3(),
     finalizer: (exit3) => suspend(() => {
-      if (--entry.observers > 0) return void_2;
+      if (--entry.observers > 0) return void_;
       memoMap.map.delete(layer);
       return close(entry.scope, exit3);
     })
@@ -5854,7 +5615,7 @@ var fromBuildUnsafe = (build) => {
 };
 var fromBuild = (build) => fromBuildUnsafe((memoMap, scope3) => {
   const layerScope = forkUnsafe2(scope3);
-  return onExit(build(memoMap, layerScope), (exit3) => exit3._tag === "Failure" ? close(layerScope, exit3) : void_2);
+  return onExit(build(memoMap, layerScope), (exit3) => exit3._tag === "Failure" ? close(layerScope, exit3) : void_);
 });
 var fromBuildMemo = (build) => {
   const self = fromBuild((memoMap, scope3) => memoMap.getOrElseMemoize(self, scope3, build));
@@ -6029,7 +5790,7 @@ var isTimeZoneOffset = (u) => isTimeZone(u) && u._tag === "Offset";
 var isTimeZoneNamed = (u) => isTimeZone(u) && u._tag === "Named";
 var isUtc = (self) => self._tag === "Utc";
 var isZoned = (self) => self._tag === "Zoned";
-var Equivalence2 = /* @__PURE__ */ make3((a, b) => a.epochMilliseconds === b.epochMilliseconds);
+var Equivalence2 = /* @__PURE__ */ make((a, b) => a.epochMilliseconds === b.epochMilliseconds);
 var makeUtc = (epochMillis) => {
   const self = Object.create(ProtoUtc);
   self.epochMilliseconds = epochMillis;
@@ -6100,7 +5861,7 @@ var makeZonedUnsafe = (input, options) => {
   return makeZonedFromAdjusted(self.epochMilliseconds, zone, options?.disambiguation ?? "compatible");
 };
 var makeZoned = /* @__PURE__ */ liftThrowable(makeZonedUnsafe);
-var make8 = /* @__PURE__ */ liftThrowable(makeUnsafe4);
+var make6 = /* @__PURE__ */ liftThrowable(makeUnsafe4);
 var zonedStringRegExp = /^(.{17,35})\[(.+)\]$/;
 var makeZonedFromString = (input) => {
   const match7 = zonedStringRegExp.exec(input);
@@ -6441,7 +6202,7 @@ var toStepWithMetadata = (schedule2) => clockWith((clock) => map5(toStep(schedul
       const meta = metaFn(now2, input);
       meta.output = output;
       meta.duration = duration;
-      return as2(sleep(duration), meta);
+      return as(sleep(duration), meta);
     });
   });
 }));
@@ -6505,7 +6266,7 @@ var provideLayer = (self, layer, options) => scopedWith((scope3) => flatMap3(opt
 var provide3 = /* @__PURE__ */ dual((args2) => isEffect(args2[0]), (self, source, options) => isContext(source) ? provideContext(self, source) : provideLayer(self, Array.isArray(source) ? mergeAll2(...source) : source, options));
 
 // node_modules/effect/dist/internal/schedule.js
-var repeatOrElse = /* @__PURE__ */ dual(3, (self, schedule2, orElse2) => flatMap3(toStepWithMetadata(schedule2), (step) => {
+var repeatOrElse = /* @__PURE__ */ dual(3, (self, schedule2, orElse) => flatMap3(toStepWithMetadata(schedule2), (step) => {
   let meta = CurrentMetadata.defaultValue();
   const loop = (input) => matchEffect2(step(input), {
     onSuccess(meta_) {
@@ -6515,9 +6276,9 @@ var repeatOrElse = /* @__PURE__ */ dual(3, (self, schedule2, orElse2) => flatMap
     onFailure: failCause,
     onDone: succeed3
   });
-  return catchCauseFilter(flatMap3(provideService(self, CurrentMetadata, meta), loop), findRecoverableError, (error) => orElse2(error, meta.attempt === 0 ? none2() : some2(meta)));
+  return catchCauseFilter(flatMap3(provideService(self, CurrentMetadata, meta), loop), findRecoverableError, (error) => orElse(error, meta.attempt === 0 ? none2() : some2(meta)));
 }));
-var retryOrElse = /* @__PURE__ */ dual(3, (self, policy, orElse2) => flatMap3(toStepWithMetadata(policy), (step) => {
+var retryOrElse = /* @__PURE__ */ dual(3, (self, policy, orElse) => flatMap3(toStepWithMetadata(policy), (step) => {
   let meta = CurrentMetadata.defaultValue();
   let lastError;
   const loop = catchCauseFilter(suspend(() => provideService(self, CurrentMetadata, meta)), findRecoverableError, (error) => {
@@ -6527,7 +6288,7 @@ var retryOrElse = /* @__PURE__ */ dual(3, (self, policy, orElse2) => flatMap3(to
       return loop;
     });
   });
-  return catchDone(loop, (out) => internalCall(() => orElse2(lastError, out)));
+  return catchDone(loop, (out) => internalCall(() => orElse(lastError, out)));
 }));
 var repeat = /* @__PURE__ */ dual(2, (self, options) => {
   const schedule2 = typeof options === "function" ? options(identity) : isSchedule(options) ? options : buildFromOptions(options);
@@ -6591,7 +6352,7 @@ var makeEventEmitter = (onEvent, currentMetadata) => {
         stepIndex: meta.stepIndex,
         startNanos: clock.monotonicTimeNanosUnsafe()
       };
-      return as2(emit({
+      return as(emit({
         _tag: "AttemptStart",
         attempt: state.attempt,
         stepAttempt: state.stepAttempt,
@@ -6887,7 +6648,7 @@ var addEntry = (resolver, request3, resume, fiber3) => {
             newBatch.map = void 0;
             batchPool.push(newBatch);
           }
-          return void_2;
+          return void_;
         })
       };
       batch = newBatch;
@@ -6929,7 +6690,7 @@ var removeEntryUnsafe = (resolver, entry) => {
 };
 var maybeRemoveEntry = (resolver, entry) => sync(() => removeEntryUnsafe(resolver, entry));
 function runBatch(batch) {
-  if (!batch.map.has(batch.key)) return void_2;
+  if (!batch.map.has(batch.key)) return void_;
   batch.map.delete(batch.key);
   return batch.run;
 }
@@ -7046,7 +6807,7 @@ function attributesToRecord(attributes) {
 // node_modules/effect/dist/Effect.js
 var TypeId13 = EffectTypeId;
 var isEffect2 = isEffect;
-var all3 = all2;
+var all2 = all;
 var partition3 = partition2;
 var reduce2 = reduce;
 var validate2 = validate;
@@ -7062,15 +6823,15 @@ var succeedNone2 = succeedNone;
 var succeedSome2 = succeedSome;
 var suspend2 = suspend;
 var sync2 = sync;
-var void_4 = void_2;
+var void_3 = void_;
 var undefined_2 = undefined_;
 var callback2 = callback;
 var never2 = never;
-var Do3 = Do2;
-var bindTo4 = bindTo3;
-var let_4 = let_3;
-var bind4 = bind3;
-var gen3 = gen2;
+var Do2 = Do;
+var bindTo3 = bindTo2;
+var let_3 = let_2;
+var bind3 = bind2;
+var gen2 = gen;
 var fail5 = fail3;
 var failSync2 = failSync;
 var failCause3 = failCause;
@@ -7087,18 +6848,18 @@ var transposeOption2 = transposeOption;
 var fromNullishOr3 = fromNullishOr2;
 var flatMap4 = flatMap3;
 var flatten4 = flatten3;
-var andThen3 = andThen2;
-var tap3 = tap2;
+var andThen2 = andThen;
+var tap2 = tap;
 var result2 = result;
 var option2 = option;
 var exit2 = exit;
 var map7 = map5;
-var as3 = as2;
+var as2 = as;
 var asSome2 = asSome;
-var asVoid3 = asVoid2;
+var asVoid2 = asVoid;
 var flip2 = flip;
 var zip2 = zip;
-var zipWith3 = zipWith2;
+var zipWith2 = zipWith;
 var catch_2 = catch_;
 var catchTag2 = catchTag;
 var catchTags2 = catchTags;
@@ -7142,7 +6903,7 @@ var raceAllFirst2 = raceAllFirst;
 var race2 = race;
 var raceFirst2 = raceFirst;
 var filter4 = filter3;
-var filterMap3 = filterMap2;
+var filterMap2 = filterMap;
 var filterMapEffect2 = filterMapEffect;
 var filterOrElse2 = filterOrElse;
 var filterMapOrElse2 = filterMapOrElse;
@@ -7275,7 +7036,7 @@ var track = /* @__PURE__ */ dual((args2) => isEffect2(args2[0]), (self, metric, 
   const input = f === void 0 ? exit3 : f(exit3);
   return update(metric, input);
 }));
-var trackSuccesses = /* @__PURE__ */ dual((args2) => isEffect2(args2[0]), (self, metric, f) => tap3(self, (value3) => {
+var trackSuccesses = /* @__PURE__ */ dual((args2) => isEffect2(args2[0]), (self, metric, f) => tap2(self, (value3) => {
   const input = f === void 0 ? value3 : f(value3);
   return update(metric, input);
 }));
@@ -7318,7 +7079,7 @@ var tx = (effect) => withFiber2((fiber3) => {
   let result3;
   return uninterruptibleMask2((restore) => {
     const run2 = restore(effect).pipe(provideService2(Transaction, mutable3), tapCause2((cause) => {
-      if (!mutable3.retry) return void_4;
+      if (!mutable3.retry) return void_3;
       if (!hasInterruptsOnly(cause)) return sync2(() => clearTransaction(mutable3));
       return restore(awaitPendingTransaction(mutable3));
     }), exit2);
@@ -7364,7 +7125,7 @@ var isTransactionConsistent = (state) => {
 };
 var awaitPendingTransaction = (state) => callback2((resume) => {
   if (!isTransactionConsistent(state)) {
-    return resume(void_4);
+    return resume(void_3);
   }
   const key = {};
   const refs = Array.from(state.journal.keys());
@@ -7375,7 +7136,7 @@ var awaitPendingTransaction = (state) => callback2((resume) => {
   };
   const onCall = () => {
     clearPending();
-    resume(void_4);
+    resume(void_3);
   };
   for (const ref of refs) {
     ref.pending.set(key, onCall);
@@ -7467,7 +7228,7 @@ var BigDecimalProto = {
   }
 };
 var isBigDecimal = (u) => hasProperty(u, TypeId14);
-var make9 = (value3, scale) => {
+var make7 = (value3, scale) => {
   if (!Number.isSafeInteger(scale)) {
     throw new RangeError(`Scale must be a safe integer, got ${scale}`);
   }
@@ -7477,7 +7238,7 @@ var make9 = (value3, scale) => {
   return o;
 };
 var makeNormalized = (value3, scale) => {
-  const o = make9(value3, scale);
+  const o = make7(value3, scale);
   o.normalized = o;
   return o;
 };
@@ -7523,7 +7284,7 @@ var compare = (self, that) => {
   const powerOfTen = comparisonPowersOfTen[absoluteScaleDifference] ??= bigint102 ** BigInt(absoluteScaleDifference);
   return scaleDifference > 0 ? compareBigInt(self.value, that.value * powerOfTen) : compareBigInt(self.value * powerOfTen, that.value);
 };
-var Order = /* @__PURE__ */ make4(compare);
+var Order = /* @__PURE__ */ make2(compare);
 var sign = (n) => n.value === bigint03 ? 0 : n.value < bigint03 ? -1 : 1;
 var fromString = (s) => {
   if (s === "") {
@@ -7562,7 +7323,7 @@ var fromString = (s) => {
   if (!Number.isSafeInteger(scale)) {
     return none2();
   }
-  return some2(make9(BigInt(digits), scale));
+  return some2(make7(BigInt(digits), scale));
 };
 var format3 = (n) => {
   const normalized = normalize(n);
@@ -7915,7 +7676,7 @@ __export(Schema_exports, {
   isUppercased: () => isUppercased,
   link: () => link,
   linkDecoding: () => linkDecoding,
-  make: () => make23,
+  make: () => make21,
   makeClassTrusted: () => makeClassTrusted,
   makeFilter: () => makeFilter2,
   makeFilterGroup: () => makeFilterGroup,
@@ -8066,7 +7827,7 @@ var binaryUnits = [decimalUnits[0], {
 }];
 var allUnits = [...decimalUnits, .../* @__PURE__ */ binaryUnits.slice(1)];
 var unitsByName = /* @__PURE__ */ new Map(/* @__PURE__ */ allUnits.flatMap((unit) => unit.names.map((name) => [name, unit])));
-var make10 = (value3) => value3;
+var make8 = (value3) => value3;
 var invalid2 = (message) => {
   throw new Error(`Invalid ByteSize: ${message}`);
 };
@@ -8074,7 +7835,7 @@ var fromNumber = (input) => {
   if (!Number.isSafeInteger(input) || input < 0) {
     return invalid2(`expected a non-negative safe integer, received ${input}`);
   }
-  return make10(BigInt(input));
+  return make8(BigInt(input));
 };
 var fromStringUnsafe = (input) => {
   const match7 = /^\s*(\d+)(?:\.(\d+))?\s*([A-Za-z]+)\s*$/.exec(input);
@@ -8087,14 +7848,14 @@ var fromStringUnsafe = (input) => {
   if (numerator % scale !== bigint04) {
     return invalid2(`${JSON.stringify(input)} does not represent an integral number of bytes`);
   }
-  return make10(numerator / scale);
+  return make8(numerator / scale);
 };
 var fromString2 = /* @__PURE__ */ liftThrowable(fromStringUnsafe);
 var fromInputUnsafe2 = (input) => {
   switch (typeof input) {
     case "bigint":
       if (input < bigint04) return invalid2(`expected a non-negative bigint, received ${input}`);
-      return make10(input);
+      return make8(input);
     case "number":
       return fromNumber(input);
     case "string":
@@ -8117,20 +7878,20 @@ function copy(src, srcPos, dest, destPos, len) {
   return dest;
 }
 var emptyArray = [];
-var makeEquivalence5 = (isEquivalent) => make3((self, that) => {
+var makeEquivalence4 = (isEquivalent) => make((self, that) => {
   if (self.length !== that.length) {
     return false;
   }
-  const as4 = toReadonlyArray(self);
+  const as3 = toReadonlyArray(self);
   const bs = toReadonlyArray(that);
-  for (let i = 0; i < as4.length; i++) {
-    if (!isEquivalent(as4[i], bs[i])) {
+  for (let i = 0; i < as3.length; i++) {
+    if (!isEquivalent(as3[i], bs[i])) {
       return false;
     }
   }
   return true;
 });
-var _equivalence = /* @__PURE__ */ makeEquivalence5(equals);
+var _equivalence = /* @__PURE__ */ makeEquivalence4(equals);
 var ChunkProto = {
   [TypeId15]: {
     _A: (_) => _
@@ -8221,7 +7982,7 @@ var of = (a) => makeChunk({
   _tag: "ISingleton",
   a
 });
-var fromIterable3 = (self) => isChunk(self) ? self : fromArrayUnsafe(fromIterable2(self));
+var fromIterable2 = (self) => isChunk(self) ? self : fromArrayUnsafe(fromIterable(self));
 var copyToArray = (self, array2, initial) => {
   switch (self.backing._tag) {
     case "IArray": {
@@ -8282,7 +8043,7 @@ var isZoned2 = isZoned;
 var Equivalence4 = Equivalence2;
 var makeUnsafe5 = makeUnsafe4;
 var makeZonedUnsafe2 = makeZonedUnsafe;
-var make11 = make8;
+var make9 = make6;
 var makeZonedFromString2 = makeZonedFromString;
 var toUtc2 = toUtc;
 var zoneMakeNamedUnsafe2 = zoneMakeNamedUnsafe;
@@ -8959,7 +8720,7 @@ var HashMapImpl = class {
 var emptyNode = /* @__PURE__ */ new EmptyNode();
 var isHashMap = (u) => hasProperty(u, HashMapTypeId);
 var empty5 = () => new HashMapImpl(false, 0, emptyNode, 0);
-var fromIterable4 = (entries3) => {
+var fromIterable3 = (entries3) => {
   let root = emptyNode;
   let size6 = 0;
   const added = {
@@ -9011,7 +8772,7 @@ var size2 = (self) => self.size;
 
 // node_modules/effect/dist/HashMap.js
 var isHashMap2 = isHashMap;
-var fromIterable5 = fromIterable4;
+var fromIterable4 = fromIterable3;
 var entries2 = entries;
 var toEntries = (self) => Array.from(entries2(self));
 var size3 = size2;
@@ -9053,7 +8814,7 @@ var makeImpl2 = (keyMap2) => {
 };
 var isHashSet = (u) => hasProperty(u, HashSetTypeId);
 var keyMap = (self) => self.keyMap;
-var fromIterable6 = (values2) => {
+var fromIterable5 = (values2) => {
   let map10 = empty5();
   for (const value3 of values2) {
     map10 = set2(map10, value3, true);
@@ -9072,7 +8833,7 @@ var every2 = (self, predicate) => {
 };
 
 // node_modules/effect/dist/HashSet.js
-var fromIterable7 = fromIterable6;
+var fromIterable6 = fromIterable5;
 var isHashSet2 = isHashSet;
 var size5 = size4;
 
@@ -9134,7 +8895,7 @@ var fromReadonlyRecord = (cookies) => {
   self.cookies = cookies;
   return self;
 };
-var fromIterable8 = (cookies) => {
+var fromIterable7 = (cookies) => {
   const record2 = {};
   for (const cookie of cookies) {
     assignProperty(record2, cookie.name, cookie);
@@ -9150,7 +8911,7 @@ var fromSetCookie = (headers) => {
       cookies.push(cookie);
     }
   }
-  return fromIterable8(cookies);
+  return fromIterable7(cookies);
 };
 function parseSetCookie(header) {
   const parts2 = header.split(";").map((_) => _.trim()).filter((_) => _ !== "");
@@ -9321,7 +9082,7 @@ function validateCookie(name, encodedValue, options) {
     return CookiesError.fromReason("CookieInfinityMaxAge");
   }
 }
-var makeCookieUnsafe = (name, value3, options) => getOrThrow2(makeCookie(name, value3, options));
+var makeCookieUnsafe = (name, value3, options) => getOrThrow(makeCookie(name, value3, options));
 function serializeCookie(self) {
   const error = validateCookie(self.name, self.valueEncoded, self.options);
   if (error !== void 0) {
@@ -9413,7 +9174,7 @@ var value = (self) => {
 // node_modules/effect/dist/Redacted.js
 var TypeId17 = "~effect/Redacted";
 var isRedacted = (u) => hasProperty(u, TypeId17);
-var make14 = (value3, options) => {
+var make12 = (value3, options) => {
   const self = Object.create(Proto5);
   if (options?.label) {
     self.label = options.label;
@@ -9441,7 +9202,7 @@ var Proto5 = {
   }
 };
 var value2 = value;
-var makeEquivalence6 = (isEquivalent) => make3((x, y) => isEquivalent(value2(x), value2(y)));
+var makeEquivalence5 = (isEquivalent) => make((x, y) => isEquivalent(value2(x), value2(y)));
 
 // node_modules/effect/dist/http/Headers.js
 var TypeId18 = /* @__PURE__ */ Symbol.for("~effect/http/Headers");
@@ -9477,7 +9238,7 @@ var Proto6 = /* @__PURE__ */ Object.defineProperties(/* @__PURE__ */ Object.crea
     value: BaseProto[NodeInspectSymbol]
   }
 });
-var Equivalence5 = /* @__PURE__ */ makeEquivalence3(/* @__PURE__ */ strictEqual());
+var Equivalence5 = /* @__PURE__ */ makeEquivalence2(/* @__PURE__ */ strictEqual());
 var empty7 = /* @__PURE__ */ Object.create(Proto6);
 var fromInput3 = (input) => {
   if (input === void 0) {
@@ -9507,12 +9268,12 @@ var redact2 = /* @__PURE__ */ dual(2, (self, key) => {
     if (typeof key2 === "string") {
       const k = key2.toLowerCase();
       if (k in self) {
-        out[k] = make14(self[k]);
+        out[k] = make12(self[k]);
       }
     } else {
       for (const name in self) {
         if (name.search(key2) !== -1) {
-          out[name] = make14(self[name]);
+          out[name] = make12(self[name]);
         }
       }
     }
@@ -9666,7 +9427,7 @@ var Proto7 = {
     return array(this.params.flat());
   }
 };
-var make15 = (params) => {
+var make13 = (params) => {
   const self = Object.create(Proto7);
   self.params = params;
   return self;
@@ -9685,10 +9446,10 @@ var fromInput4 = (input) => {
       out.push(parsed[i]);
     }
   }
-  return make15(out);
+  return make13(out);
 };
 var fromInputNested = (input) => {
-  const entries3 = typeof input[Symbol.iterator] === "function" ? fromIterable2(input) : Object.entries(input);
+  const entries3 = typeof input[Symbol.iterator] === "function" ? fromIterable(input) : Object.entries(input);
   const out = [];
   for (const [key, value3] of entries3) {
     if (Array.isArray(value3)) {
@@ -9709,8 +9470,8 @@ var fromInputNested = (input) => {
   return out;
 };
 var coerce = (value3) => isRedacted(value3) ? value3 : String(value3);
-var Equivalence6 = /* @__PURE__ */ make3((a, b) => arrayEquivalence(a.params, b.params));
-var arrayEquivalence = /* @__PURE__ */ makeEquivalence4(/* @__PURE__ */ makeEquivalence2([/* @__PURE__ */ strictEqual(), /* @__PURE__ */ asEquivalence()]));
+var Equivalence6 = /* @__PURE__ */ make((a, b) => arrayEquivalence(a.params, b.params));
+var arrayEquivalence = /* @__PURE__ */ makeEquivalence3(/* @__PURE__ */ makeEquivalence([/* @__PURE__ */ strictEqual(), /* @__PURE__ */ asEquivalence()]));
 var getFirst = /* @__PURE__ */ dual(2, (self, key) => findFirst2(self.params, ([k]) => k === key).pipe(map(([, value3]) => unwrap(value3))));
 var toRecord2 = (self) => {
   const out = {};
@@ -9732,7 +9493,7 @@ var toRecord2 = (self) => {
 var toReadonlyRecord = toRecord2;
 var redact3 = /* @__PURE__ */ dual(2, (self, key) => {
   const patterns = Array.isArray(key) ? key : [key];
-  return self.params.map(([name, value3]) => [name, typeof value3 === "string" && isRedactedName2(name, patterns) ? make14(value3) : value3]);
+  return self.params.map(([name, value3]) => [name, typeof value3 === "string" && isRedactedName2(name, patterns) ? make12(value3) : value3]);
 });
 var isRedactedName2 = isRedactedName;
 var CurrentRedactedNames2 = /* @__PURE__ */ Reference("effect/http/UrlParams/CurrentRedactedNames", {
@@ -9807,7 +9568,7 @@ var ProtoGraph = {
     return pipeArguments(this, arguments);
   }
 };
-var make16 = (type, mutable3) => {
+var make14 = (type, mutable3) => {
   const graph = Object.create(ProtoGraph);
   graph.type = type;
   graph.mutable = mutable3;
@@ -9838,7 +9599,7 @@ var snapshot = (graph) => {
   };
 };
 var hydrate = (snapshot2) => {
-  const graph = make16(snapshot2.type, false);
+  const graph = make14(snapshot2.type, false);
   for (const node of snapshot2.nodes) {
     graph.nodes.set(node.index, node.data);
     graph.adjacency.set(node.index, []);
@@ -10898,7 +10659,7 @@ var Void = class extends ASTNodeImpl {
     return "void";
   }
 };
-var void_5 = /* @__PURE__ */ new Void();
+var void_4 = /* @__PURE__ */ new Void();
 var Never = class extends ASTNodeImpl {
   _tag = "Never";
   /** @internal */
@@ -11404,9 +11165,9 @@ function stepArray(s, item, exit3, i) {
   if (value3 !== missing) {
     s.output[i] = value3;
   } else {
-    const p = s.getParser(s.tailThreshold, i);
-    if (isOptional(p.ast)) return;
-    const issue = new Pointer([i], new MissingKey(p.ast.context?.annotations));
+    const p2 = s.getParser(s.tailThreshold, i);
+    if (isOptional(p2.ast)) return;
+    const issue = new Pointer([i], new MissingKey(p2.ast.context?.annotations));
     if (s.options.errors === "all") {
       if (s.issues) s.issues.push(issue);
       else s.issues = [issue];
@@ -11553,14 +11314,14 @@ var Objects = class extends ASTNodeImpl {
       const expectedKeys = new Set(ast.propertySignatures.map((ps) => typeof ps.name === "number" ? globalThis.String(ps.name) : ps.name));
       const finishIndex = (s, key, k2, inputValue, exitValue) => {
         if (exitValue._tag === "Failure") {
-          return wrapPropertyKeyIssue(s, ast, key, exitValue) ?? void_3;
+          return wrapPropertyKeyIssue(s, ast, key, exitValue) ?? void_2;
         }
         const value3 = exitValue === sameExit ? inputValue : exitValue[args];
         if (k2 !== missing && value3 !== missing) {
-          if (hasProperties && (expectedKeys.has(key) || expectedKeys.has(typeof k2 === "number" ? globalThis.String(k2) : k2))) return void_3;
+          if (hasProperties && (expectedKeys.has(key) || expectedKeys.has(typeof k2 === "number" ? globalThis.String(k2) : k2))) return void_2;
           assignProperty(s.out, k2, value3);
         }
-        return void_3;
+        return void_2;
       };
       const parseIndex = (s, key, index2, exitKey) => {
         if (!exitKey) {
@@ -11571,7 +11332,7 @@ var Objects = class extends ASTNodeImpl {
           exitKey = eff;
         }
         if (exitKey._tag === "Failure") {
-          return wrapPropertyKeyIssue(s, ast, key, exitKey) ?? void_3;
+          return wrapPropertyKeyIssue(s, ast, key, exitKey) ?? void_2;
         }
         const k2 = exitKey === sameExit ? key : exitKey[args];
         const inputValue = s.input[key];
@@ -11736,9 +11497,9 @@ var Objects = class extends ASTNodeImpl {
       return t === ps.type ? ps : new PropertySignature(ps.name, t);
     });
     const indexes = mapOrSame(this.indexSignatures, (is3) => {
-      const p = recurParameter(is3.parameter);
+      const p2 = recurParameter(is3.parameter);
       const t = recur2(is3.type);
-      return p === is3.parameter && t === is3.type ? is3 : new IndexSignature(p, t);
+      return p2 === is3.parameter && t === is3.type ? is3 : new IndexSignature(p2, t);
     });
     return props === this.propertySignatures && indexes === this.indexSignatures && checks === this.checks && encodingChecks === this.encodingChecks ? this : new Objects(props, indexes, this.annotations, checks, void 0, this.context, encodingChecks);
   }
@@ -11756,19 +11517,19 @@ var Objects = class extends ASTNodeImpl {
     return "object";
   }
 };
-function stepProperty(s, p, exit3) {
+function stepProperty(s, p2, exit3) {
   if (exit3._tag === "Failure") {
-    return wrapPropertyKeyIssue(s, s.ast, p.name, exit3);
+    return wrapPropertyKeyIssue(s, s.ast, p2.name, exit3);
   }
   if (exit3 === sameExit) return;
   const value3 = exit3[args];
   if (value3 !== missing) {
-    assignProperty(s.out, p.name, value3);
+    assignProperty(s.out, p2.name, value3);
     return;
   }
-  delete s.out[p.name];
-  if (!isOptional(p.type)) {
-    const issue = new Pointer([p.name], new MissingKey(p.type.context?.annotations));
+  delete s.out[p2.name];
+  if (!isOptional(p2.type)) {
+    const issue = new Pointer([p2.name], new MissingKey(p2.type.context?.annotations));
     if (s.options.errors === "all") {
       if (s.issues) s.issues.push(issue);
       else s.issues = [issue];
@@ -11779,13 +11540,13 @@ function stepProperty(s, p, exit3) {
   }
 }
 var parsePropertiesOptions = {
-  onItem(s, p) {
-    if (!hasPropertySignature(s.input, p.name)) {
-      return p.parser(missing, s.options);
+  onItem(s, p2) {
+    if (!hasPropertySignature(s.input, p2.name)) {
+      return p2.parser(missing, s.options);
     }
-    const value3 = s.input[p.name];
-    assignProperty(s.out, p.name, value3);
-    return p.parser(value3, s.options);
+    const value3 = s.input[p2.name];
+    assignProperty(s.out, p2.name, value3);
+    return p2.parser(value3, s.options);
   },
   step: stepProperty
 };
@@ -11999,12 +11760,12 @@ function getCandidateIndex(types) {
     for (const [literal, indexes] of byValue) {
       candidates.set(literal, Object.freeze(Array.from(indexes)));
     }
-    const all4 = Object.freeze(types.map((_, i) => i));
+    const all3 = Object.freeze(types.map((_, i) => i));
     index2 = (input, isConstructor) => {
       if (isObjectKeyword(input)) {
         const value3 = hasPropertySignature(input, key) ? input[key] : void 0;
         if (value3 !== void 0) return candidates.get(value3) ?? emptyCandidates;
-        if (isConstructor) return all4;
+        if (isConstructor) return all3;
       }
       return emptyCandidates;
     };
@@ -12032,7 +11793,7 @@ function getCandidateIndex(types) {
         }
       }
       if (directKey === void 0) {
-        for (const [key, [byValue, all4]] of bySentinel) {
+        for (const [key, [byValue, all3]] of bySentinel) {
           const hasKey = hasPropertySignature(input, key);
           const value3 = hasKey ? input[key] : void 0;
           if (hasKey && (!isConstructor || value3 !== void 0)) {
@@ -12041,18 +11802,18 @@ function getCandidateIndex(types) {
               for (const i of match7) selected.add(i);
             }
           } else if (isConstructor) {
-            for (const i of all4) selected.add(i);
+            for (const i of all3) selected.add(i);
           }
         }
       }
-      for (const [key, [byValue, all4]] of bySentinel) {
+      for (const [key, [byValue, all3]] of bySentinel) {
         if (key === directKey) continue;
         const hasKey = hasPropertySignature(input, key);
         const value3 = hasKey ? input[key] : void 0;
         if (hasKey && (!isConstructor || value3 !== void 0)) {
           const match7 = byValue.get(value3);
           for (const i of selected) {
-            if (all4.has(i) && !match7?.has(i)) selected.delete(i);
+            if (all3.has(i) && !match7?.has(i)) selected.delete(i);
           }
         }
       }
@@ -12208,7 +11969,7 @@ var parseUnion = /* @__PURE__ */ iterateEager()({
       if (s.successes) {
         s.successes.push(s.ast.types[i]);
       } else {
-        return void_3;
+        return void_2;
       }
     }
   }
@@ -12453,22 +12214,22 @@ function appendTransformation(from, transformation, to) {
   const link2 = new Link(from, transformation);
   return replaceEncoding(to, to.encoding ? [...to.encoding, link2] : [link2]);
 }
-function mapOrSame(as4, f) {
+function mapOrSame(as3, f) {
   let out;
-  for (let i = 0; i < as4.length; i++) {
-    const a = as4[i];
+  for (let i = 0; i < as3.length; i++) {
+    const a = as3[i];
     const fa = f(a);
     if (out) {
       out[i] = fa;
     } else if (fa !== a) {
-      out = new Array(as4.length);
+      out = new Array(as3.length);
       for (let j = 0; j < i; j++) {
-        out[j] = as4[j];
+        out[j] = as3[j];
       }
       out[i] = fa;
     }
   }
-  return out ?? as4;
+  return out ?? as3;
 }
 function annotateKey(ast, annotations) {
   const context3 = ast.context ? new Context(ast.context.isOptional, ast.context.isMutable, ast.context.constructorDefault, {
@@ -13183,7 +12944,7 @@ function makeOption(schema) {
     return none2();
   };
 }
-function make17(schema) {
+function make15(schema) {
   return makeConstructorSync(toType(schema.ast));
 }
 function is(schema) {
@@ -13407,11 +13168,11 @@ function makeConstructorSync(ast) {
     } : {
       disableChecks: true
     } : options?.parseOptions ?? defaultParseOptions;
-    const make26 = entry.make;
-    if (make26 !== void 0 && input !== missing) {
+    const make24 = entry.make;
+    if (make24 !== void 0 && input !== missing) {
       let output;
       try {
-        output = make26(input, parseOptions);
+        output = make24(input, parseOptions);
       } catch (error) {
         getSchemaIssueOrThrow(die2(error), "Constructor adapter can only throw schema issues");
         throw error;
@@ -13431,7 +13192,7 @@ var RebuildOptions = /* @__PURE__ */ Symbol();
 var SchemaProto = {
   [TypeId24]: TypeId24,
   get make() {
-    const value3 = make17(this);
+    const value3 = make15(this);
     Object.defineProperty(this, "make", {
       value: value3,
       enumerable: true
@@ -13467,10 +13228,10 @@ var SchemaProto = {
     return this.rebuild(appendChecks(this.ast, checks));
   },
   rebuild(ast) {
-    return make18(ast, this[RebuildOptions]);
+    return make16(ast, this[RebuildOptions]);
   }
 };
-function make18(ast, options) {
+function make16(ast, options) {
   function Schema() {
   }
   const self = Object.setPrototypeOf(Schema, SchemaProto);
@@ -13835,17 +13596,17 @@ function convertDependencies(source, out, context3, targetDialect) {
   const dependencies = {};
   const keys3 = /* @__PURE__ */ new Set([...Object.keys(dependentRequired ?? {}), ...Object.keys(dependentSchemas ?? {})]);
   for (const key of keys3) {
-    const required2 = dependentRequired?.[key];
+    const required3 = dependentRequired?.[key];
     const dependency = dependentSchemas?.[key];
-    const omitRequired = targetDialect === "draft-04" && Array.isArray(required2) && required2.length === 0;
+    const omitRequired = targetDialect === "draft-04" && Array.isArray(required3) && required3.length === 0;
     if (dependency === void 0) {
-      if (!omitRequired) assignProperty(dependencies, key, required2);
-    } else if (required2 === void 0 || omitRequired) {
+      if (!omitRequired) assignProperty(dependencies, key, required3);
+    } else if (required3 === void 0 || omitRequired) {
       assignProperty(dependencies, key, context3.schemaAt(dependency, ["dependentSchemas", key], ["dependencies", key]));
     } else {
       assignProperty(dependencies, key, {
         allOf: [context3.schemaAt(dependency, ["dependentSchemas", key], ["dependencies", key, "allOf", "0"]), {
-          required: required2
+          required: required3
         }]
       });
     }
@@ -13878,7 +13639,7 @@ function convertLegacyId(source, out, targetKey, dialect) {
 
 // node_modules/effect/dist/internal/schema/toCodec.js
 function toCodecJson(schema) {
-  return make18(toCodecJsonAST(schema.ast), {
+  return make16(toCodecJsonAST(schema.ast), {
     schema
   });
 }
@@ -13929,7 +13690,7 @@ function toCodecJsonASTStep(ast, recur2) {
       if (!isFunction(getLink)) {
         return replaceEncoding(ast, [unknownToJson]);
       }
-      const typeParameters = ast.typeParameters.map((tp) => make18(toEncoded(tp)));
+      const typeParameters = ast.typeParameters.map((tp) => make16(toEncoded(tp)));
       const link2 = getLink(typeParameters);
       return link2 === void 0 ? ast : replaceEncoding(ast, [mapLink(link2, recur2)]);
     }
@@ -13964,7 +13725,7 @@ function toCodecJsonASTStep(ast, recur2) {
   return ast;
 }
 function toCodecIso(schema) {
-  return make18(toCodecIsoAST(toType(schema.ast)));
+  return make16(toCodecIsoAST(toType(schema.ast)));
 }
 var toCodecIsoAST = /* @__PURE__ */ memoize((ast) => {
   const out = toCodecIsoASTStep(ast, toCodecIsoAST);
@@ -13975,7 +13736,7 @@ function toCodecIsoASTStep(ast, recur2) {
     case "Declaration": {
       const getLink = ast.annotations?.toCodecIso ?? ast.annotations?.toCodec;
       if (isFunction(getLink)) {
-        const link2 = getLink(ast.typeParameters.map((tp) => make18(tp)));
+        const link2 = getLink(ast.typeParameters.map((tp) => make16(tp)));
         return replaceEncoding(ast, [mapLink(link2, recur2)]);
       }
       return ast;
@@ -13989,12 +13750,12 @@ function toCodecIsoASTStep(ast, recur2) {
   return ast;
 }
 function toCodecStringTree(schema) {
-  return make18(toCodecStringTreeAST(schema.ast), {
+  return make16(toCodecStringTreeAST(schema.ast), {
     schema
   });
 }
 function toCodecArrayFromSingle(schema) {
-  return make18(toCodecArrayFromSingleAST(schema.ast));
+  return make16(toCodecArrayFromSingleAST(schema.ast));
 }
 var toStringTreeReorder = /* @__PURE__ */ makeReorder((ast) => {
   switch (ast._tag) {
@@ -14012,7 +13773,7 @@ var toStringTreeReorder = /* @__PURE__ */ makeReorder((ast) => {
 function toCodecStringTreeASTStep(ast, recur2, onMissingAnnotation) {
   switch (ast._tag) {
     case "Declaration": {
-      const typeParameters = ast.typeParameters.map((tp) => make18(recur2(toEncoded(tp))));
+      const typeParameters = ast.typeParameters.map((tp) => make16(recur2(toEncoded(tp))));
       const getStringTreeLink = ast.annotations?.toCodecStringTree;
       if (isFunction(getStringTreeLink)) {
         const link3 = getStringTreeLink(typeParameters);
@@ -14087,7 +13848,7 @@ var toCodecArrayFromSingleAST = /* @__PURE__ */ applyToSelfOrLastLinkEncodingIde
   stopAt: isCodecArrayFromSingleLink
 });
 function toCodecGoJson(schema) {
-  return make18(toCodecGoJsonAST(schema.ast), {
+  return make16(toCodecGoJsonAST(schema.ast), {
     schema
   });
 }
@@ -14130,7 +13891,7 @@ function acceptsNull(ast) {
     case "Unknown":
     case "Any":
     case "Declaration":
-      return is(make18(replaceContext(encoded, void 0)))(null);
+      return is(make16(replaceContext(encoded, void 0)))(null);
   }
   return false;
 }
@@ -14621,7 +14382,7 @@ function compileJsonSchema(representations, rootPaths, references, options) {
           type: "object"
         };
         const properties = {};
-        const required2 = [];
+        const required3 = [];
         for (let index2 = 0; index2 < representation.propertySignatures.length; index2++) {
           const property = representation.propertySignatures[index2];
           if (typeof property.name !== "string") {
@@ -14631,10 +14392,10 @@ function compileJsonSchema(representations, rootPaths, references, options) {
           const schema = recur2(property.type, [...path, "propertySignatures", index2, "type"], dependencies);
           const annotations = collectJsonSchemaAnnotations(property.annotations, options);
           assignProperty(properties, name, annotations === void 0 ? schema : registerPendingOneOf(appendJsonSchema(schema, annotations)));
-          if (!property.isOptional) required2.push(name);
+          if (!property.isOptional) required3.push(name);
         }
         if (representation.propertySignatures.length > 0) out.properties = properties;
-        if (required2.length > 0) out.required = required2;
+        if (required3.length > 0) out.required = required3;
         const patternProperties = {};
         const additionalPropertySchemas = [];
         const indexValueSchemas = [];
@@ -15585,7 +15346,7 @@ function recur(ast) {
       const rest = ast.rest.map(recur);
       const [head3, ...tail] = rest;
       const tailLength = tail.length;
-      return make3((a, b) => {
+      return make((a, b) => {
         if (!Array.isArray(a) || !Array.isArray(b)) {
           return false;
         }
@@ -15620,7 +15381,7 @@ function recur(ast) {
       }
       const propertySignatures = ast.propertySignatures.map((ps) => recur(ps.type));
       const indexSignatures = ast.indexSignatures.map((is3) => recur(is3.type));
-      return make3((a, b) => {
+      return make((a, b) => {
         if (!isObject(a) || !isObject(b)) {
           return false;
         }
@@ -15657,7 +15418,7 @@ function recur(ast) {
       const types = toType(ast).types;
       const index2 = getCandidateIndex(types);
       const compiled = types.map((candidate, i) => [_is(candidate), recur(ast.types[i])]);
-      return make3((a, b) => {
+      return make((a, b) => {
         const candidates = index2(a, false);
         for (let i = 0; i < candidates.length; i++) {
           const [is3, equivalence] = compiled[candidates[i]];
@@ -15670,7 +15431,7 @@ function recur(ast) {
     }
     case "Suspend": {
       let equivalence;
-      return make3((a, b) => (equivalence ??= toEquivalence(ast.thunk()))(a, b));
+      return make((a, b) => (equivalence ??= toEquivalence(ast.thunk()))(a, b));
     }
   }
 }
@@ -15984,10 +15745,10 @@ function buildStruct(source, f) {
 
 // node_modules/effect/dist/Optic.js
 function makeIso(get6, set6) {
-  return make19(primitiveNode("Iso", get6, set6));
+  return make17(primitiveNode("Iso", get6, set6));
 }
 function makeLens(get6, replace) {
-  return make19(primitiveNode("Lens", get6, replace));
+  return make17(primitiveNode("Lens", get6, replace));
 }
 function primitiveNode(kind, get6, set6) {
   return [{
@@ -16060,7 +15821,7 @@ function compose2(a, b) {
   return nodes;
 }
 function makeOptional(getResult, set6) {
-  return make19(primitiveNode("Optional", getResult, set6));
+  return make17(primitiveNode("Optional", getResult, set6));
 }
 var OptionalImpl = class {
   /** @internal */
@@ -16079,13 +15840,13 @@ var OptionalImpl = class {
     return (s) => getOrElse2(flatMap2(this.getResult(s), (a) => this.replaceResult(f(a), s)), () => s);
   }
   compose(that) {
-    return make19(compose2(this.node, that.node));
+    return make17(compose2(this.node, that.node));
   }
   key(key) {
-    return make19(compose2(this.node, [new PathNode([key])]));
+    return make17(compose2(this.node, [new PathNode([key])]));
   }
   optionalKey(key) {
-    return make19(compose2(this.node, primitiveNode("Lens", (s) => s[key], (a, s) => {
+    return make17(compose2(this.node, primitiveNode("Lens", (s) => s[key], (a, s) => {
       const copy3 = cloneShallow(s);
       if (a === void 0) {
         if (Array.isArray(copy3) && (typeof key === "number" || typeof key === "string" && isCanonicalArrayIndex(key))) {
@@ -16100,20 +15861,20 @@ var OptionalImpl = class {
     })));
   }
   check(...checks) {
-    return make19(compose2(this.node, [new CheckNode(checks)]));
+    return make17(compose2(this.node, [new CheckNode(checks)]));
   }
   refine(refinement, annotations) {
-    return make19(compose2(this.node, [new CheckNode([makeFilterByGuard(refinement, annotations)])]));
+    return make17(compose2(this.node, [new CheckNode([makeFilterByGuard(refinement, annotations)])]));
   }
   tag(tag2) {
     const err = fail2(new InvalidValue({
       expected: `${JSON.stringify(tag2)} tag`
     }));
-    return make19(compose2(this.node, primitiveNode("Prism", (s) => s._tag === tag2 ? succeed2(s) : err, identity)));
+    return make17(compose2(this.node, primitiveNode("Prism", (s) => s._tag === tag2 ? succeed2(s) : err, identity)));
   }
   at(key, ..._rest) {
     const err = fail2(new Pointer([key], new MissingKey(void 0)));
-    return make19(compose2(this.node, primitiveNode("Optional", (s) => Object.hasOwn(s, key) ? succeed2(s[key]) : err, (a, s) => {
+    return make17(compose2(this.node, primitiveNode("Optional", (s) => Object.hasOwn(s, key) ? succeed2(s[key]) : err, (a, s) => {
       if (Object.hasOwn(s, key)) {
         const copy3 = cloneShallow(s);
         assignProperty(copy3, key, a);
@@ -16124,9 +15885,9 @@ var OptionalImpl = class {
     })));
   }
   pick(keys3) {
-    return this.compose(makeLens(pick(keys3), (p, a) => ({
+    return this.compose(makeLens(pick(keys3), (p2, a) => ({
       ...omit2(a, keys3),
-      ...p
+      ...p2
     })));
   }
   omit(keys3) {
@@ -16144,29 +15905,29 @@ var OptionalImpl = class {
     const inner = f(id());
     return makeOptional(
       // GET: collect focused Bs
-      (s) => map2(this.getResult(s), (as4) => {
+      (s) => map2(this.getResult(s), (as3) => {
         const bs = [];
-        for (let i = 0; i < as4.length; i++) {
-          const r = inner.getResult(as4[i]);
+        for (let i = 0; i < as3.length; i++) {
+          const r = inner.getResult(as3[i]);
           if (isSuccess2(r)) bs.push(r.success);
         }
         return bs;
       }),
       // SET: bs must match the number of focusable elements
-      (bs, s) => flatMap2(this.getResult(s), (as4) => {
+      (bs, s) => flatMap2(this.getResult(s), (as3) => {
         const idxs = [];
-        for (let i = 0; i < as4.length; i++) {
-          if (isSuccess2(inner.getResult(as4[i]))) idxs.push(i);
+        for (let i = 0; i < as3.length; i++) {
+          if (isSuccess2(inner.getResult(as3[i]))) idxs.push(i);
         }
         if (bs.length !== idxs.length) {
           return fail2(new InvalidValue({
             message: `each: replacement length mismatch: ${bs.length} !== ${idxs.length}`
           }));
         }
-        const out = as4.slice();
+        const out = as3.slice();
         for (let k = 0; k < idxs.length; k++) {
           const i = idxs[k];
-          const r = inner.replaceResult(bs[k], as4[i]);
+          const r = inner.replaceResult(bs[k], as3[i]);
           if (isFailure2(r)) {
             return fail2(new Pointer([i], r.failure));
           }
@@ -16177,7 +15938,7 @@ var OptionalImpl = class {
     );
   }
   modifyAll(f) {
-    return (s) => getOrElse2(flatMap2(this.getResult(s), (as4) => this.replaceResult(as4.map(f), s)), () => s);
+    return (s) => getOrElse2(flatMap2(this.getResult(s), (as3) => this.replaceResult(as3.map(f), s)), () => s);
   }
 };
 var IsoImpl = class extends OptionalImpl {
@@ -16219,7 +15980,7 @@ var PrismImpl = class extends OptionalImpl {
     return (s) => getOrElse2(map2(this.getResult(s), (a) => this.set(f(a))), () => s);
   }
 };
-function make19(node) {
+function make17(node) {
   let op = node[0] ?? identityOperation;
   if (node.length > 1) {
     const kind = node.reduce((kind2, step) => composeKind(kind2, step.kind), "Iso");
@@ -16323,7 +16084,7 @@ function composeKind(a, b) {
   if (b === "Iso" || a === b) return a;
   return "Optional";
 }
-var identityIso = /* @__PURE__ */ make19([]);
+var identityIso = /* @__PURE__ */ make17([]);
 function id() {
   return identityIso;
 }
@@ -16347,7 +16108,7 @@ function isSchemaError(u) {
 }
 
 // node_modules/effect/dist/Bytes.js
-var Equivalence7 = /* @__PURE__ */ make3((self, that) => {
+var Equivalence7 = /* @__PURE__ */ make((self, that) => {
   if (self.length !== that.length) {
     return false;
   }
@@ -17102,7 +16863,7 @@ var interfaceError = (input, message) => fail2(new NetAddressError({
   input,
   message
 }));
-var make20 = (address, prefixLength) => {
+var make18 = (address, prefixLength) => {
   const max5 = width(address);
   if (!Number.isInteger(prefixLength) || prefixLength < 0 || prefixLength > max5) {
     return interfaceError(address, `prefix length must be an integer from 0 through ${max5}`);
@@ -17133,9 +16894,9 @@ var parseAddressWithPrefix = (input, options) => {
     prefixLength: Number(prefix)
   });
 };
-var ipv4FromString2 = (input, options) => flatMap2(parseAddressWithPrefix(input, options), (parts2) => flatMap2(ipv4FromString(parts2.address), (address) => make20(address, parts2.prefixLength ?? width(address))));
-var ipv6FromString2 = (input, options) => flatMap2(parseAddressWithPrefix(input, options), (parts2) => flatMap2(ipv6FromString(parts2.address), (address) => make20(address, parts2.prefixLength ?? width(address))));
-var fromString3 = (input, options) => flatMap2(parseAddressWithPrefix(input, options), (parts2) => flatMap2(ipFromString(parts2.address), (address) => make20(address, parts2.prefixLength ?? width(address))));
+var ipv4FromString2 = (input, options) => flatMap2(parseAddressWithPrefix(input, options), (parts2) => flatMap2(ipv4FromString(parts2.address), (address) => make18(address, parts2.prefixLength ?? width(address))));
+var ipv6FromString2 = (input, options) => flatMap2(parseAddressWithPrefix(input, options), (parts2) => flatMap2(ipv6FromString(parts2.address), (address) => make18(address, parts2.prefixLength ?? width(address))));
+var fromString3 = (input, options) => flatMap2(parseAddressWithPrefix(input, options), (parts2) => flatMap2(ipFromString(parts2.address), (address) => make18(address, parts2.prefixLength ?? width(address))));
 var format5 = (self) => `${formatIp(self.address)}/${self.prefixLength}`;
 
 // node_modules/effect/dist/net/IpNetwork.js
@@ -17177,8 +16938,8 @@ var maskBytes = (bytes2, prefixLength) => {
     return 0;
   });
 };
-var make21 = (address, prefixLength) => {
-  return flatMap2(make20(address, prefixLength), (value3) => {
+var make19 = (address, prefixLength) => {
+  return flatMap2(make18(address, prefixLength), (value3) => {
     const bytes2 = toBytes(address);
     const masked = maskBytes(bytes2, prefixLength);
     if (bytes2.some((byte, index2) => byte !== masked[index2])) {
@@ -17193,17 +16954,17 @@ var make21 = (address, prefixLength) => {
 var ipv4FromString3 = (input) => {
   return flatMap2(ipv4FromString2(input, {
     prefix: "required"
-  }), (value3) => make21(value3.address, value3.prefixLength));
+  }), (value3) => make19(value3.address, value3.prefixLength));
 };
 var ipv6FromString3 = (input) => {
   return flatMap2(ipv6FromString2(input, {
     prefix: "required"
-  }), (value3) => make21(value3.address, value3.prefixLength));
+  }), (value3) => make19(value3.address, value3.prefixLength));
 };
 var fromString4 = (input) => {
   return flatMap2(fromString3(input, {
     prefix: "required"
-  }), (value3) => make21(value3.address, value3.prefixLength));
+  }), (value3) => make19(value3.address, value3.prefixLength));
 };
 var format6 = (self) => `${formatIp(self.address)}/${self.prefixLength}`;
 
@@ -17292,7 +17053,7 @@ var unchecked = (major, minor, patch, prerelease, build) => {
   return self;
 };
 var isSemVer = (u) => hasProperty(u, TypeId29);
-var make22 = (components) => unchecked(checkComponent(components.major, "major"), checkComponent(components.minor, "minor"), checkComponent(components.patch, "patch"), components.prerelease?.map(prereleaseIdentifier) ?? [], components.build?.map(buildIdentifier) ?? []);
+var make20 = (components) => unchecked(checkComponent(components.major, "major"), checkComponent(components.minor, "minor"), checkComponent(components.patch, "patch"), components.prerelease?.map(prereleaseIdentifier) ?? [], components.build?.map(buildIdentifier) ?? []);
 var parseOrThrow = (input) => {
   let rest = input;
   let build = [];
@@ -17319,7 +17080,7 @@ var format7 = (self) => {
   return out;
 };
 var identifiersEqual = /* @__PURE__ */ Array_(/* @__PURE__ */ strictEqual());
-var Equivalence8 = /* @__PURE__ */ make3((self, that) => self.major === that.major && self.minor === that.minor && self.patch === that.patch && identifiersEqual(self.prerelease, that.prerelease) && identifiersEqual(self.build, that.build));
+var Equivalence8 = /* @__PURE__ */ make((self, that) => self.major === that.major && self.minor === that.minor && self.patch === that.patch && identifiersEqual(self.prerelease, that.prerelease) && identifiersEqual(self.build, that.build));
 
 // node_modules/effect/dist/SemVerRange.js
 var TypeId30 = "~effect/SemVerRange";
@@ -17415,7 +17176,7 @@ var parseOrThrow2 = (input) => {
   return makeRange(input.split("||").map(parseComparatorSet));
 };
 var parse2 = (input) => tryParse("SemVer range", input, parseOrThrow2);
-var parseUnsafe = (input) => getOrThrow2(parse2(input));
+var parseUnsafe = (input) => getOrThrow(parse2(input));
 var any2 = /* @__PURE__ */ makeRange([[{
   _tag: "Comparator",
   operator: "=",
@@ -17433,7 +17194,7 @@ var format8 = (self) => self.sets.map((set6) => set6.map(formatComparator).join(
 var TypeId31 = TypeId24;
 function declareConstructor() {
   return (typeParameters, run2, annotations) => {
-    return make23(new Declaration(typeParameters.map(getAST), (typeParameters2) => run2(typeParameters2.map((ast) => make23(ast))), annotations));
+    return make21(new Declaration(typeParameters.map(getAST), (typeParameters2) => run2(typeParameters2.map((ast) => make21(ast))), annotations));
   };
 }
 function declare(is3, annotations) {
@@ -17611,29 +17372,29 @@ function encodeUnknownSync2(schema, options) {
   };
 }
 var encodeSync2 = encodeUnknownSync2;
-var make23 = make18;
+var make21 = make16;
 function isSchema(u) {
   return hasProperty(u, TypeId31) && u[TypeId31] === TypeId31;
 }
-var optionalKey2 = /* @__PURE__ */ lambda((schema) => make23(optionalKey(schema.ast), {
+var optionalKey2 = /* @__PURE__ */ lambda((schema) => make21(optionalKey(schema.ast), {
   schema
 }));
 var requiredKey = /* @__PURE__ */ lambda((self) => self.schema);
 var optional2 = /* @__PURE__ */ lambda((self) => {
   const schema = UndefinedOr(self);
-  return make23(optional(self.ast), {
+  return make21(optional(self.ast), {
     schema
   });
 });
 var required = /* @__PURE__ */ lambda((self) => self.schema.members[0]);
-var mutableKey2 = /* @__PURE__ */ lambda((schema) => make23(mutableKey(schema.ast), {
+var mutableKey2 = /* @__PURE__ */ lambda((schema) => make21(mutableKey(schema.ast), {
   schema
 }));
 var readonlyKey = /* @__PURE__ */ lambda((self) => self.schema);
-var toType2 = /* @__PURE__ */ lambda((schema) => make23(toType(schema.ast), {
+var toType2 = /* @__PURE__ */ lambda((schema) => make21(toType(schema.ast), {
   schema
 }));
-var toEncoded2 = /* @__PURE__ */ lambda((schema) => make23(toEncoded(schema.ast), {
+var toEncoded2 = /* @__PURE__ */ lambda((schema) => make21(toEncoded(schema.ast), {
   schema
 }));
 var FlipTypeId = "~effect/Schema/flip";
@@ -17644,13 +17405,13 @@ function flip4(schema) {
   if (isFlip$(schema)) {
     return schema.schema.rebuild(flip3(schema.ast));
   }
-  return make23(flip3(schema.ast), {
+  return make21(flip3(schema.ast), {
     [FlipTypeId]: FlipTypeId,
     schema
   });
 }
 function Literal2(literal) {
-  const out = make23(new Literal(literal), {
+  const out = make21(new Literal(literal), {
     literal,
     transform(to) {
       return out.pipe(decodeTo2(Literal2(to), {
@@ -17665,38 +17426,38 @@ function templateLiteralParts(parts2) {
   return parts2.map((part) => isSchema(part) ? part.ast : new Literal(part));
 }
 function TemplateLiteral2(parts2) {
-  return make23(new TemplateLiteral(templateLiteralParts(parts2)), {
+  return make21(new TemplateLiteral(templateLiteralParts(parts2)), {
     parts: parts2
   });
 }
 function TemplateLiteralParser(parts2) {
-  return make23(templateLiteralParser(templateLiteralParts(parts2)), {
+  return make21(templateLiteralParser(templateLiteralParts(parts2)), {
     parts: parts2
   });
 }
 function Enum2(enums) {
-  return make23(new Enum(Object.keys(enums).filter((key) => typeof enums[enums[key]] !== "number").map((key) => [key, enums[key]])), {
+  return make21(new Enum(Object.keys(enums).filter((key) => typeof enums[enums[key]] !== "number").map((key) => [key, enums[key]])), {
     enums
   });
 }
-var Never2 = /* @__PURE__ */ make23(never3);
-var Any2 = /* @__PURE__ */ make23(any);
-var Unknown2 = /* @__PURE__ */ make23(unknown);
-var Null2 = /* @__PURE__ */ make23(null_);
-var Undefined2 = /* @__PURE__ */ make23(undefined_3);
-var String6 = /* @__PURE__ */ make23(string2);
+var Never2 = /* @__PURE__ */ make21(never3);
+var Any2 = /* @__PURE__ */ make21(any);
+var Unknown2 = /* @__PURE__ */ make21(unknown);
+var Null2 = /* @__PURE__ */ make21(null_);
+var Undefined2 = /* @__PURE__ */ make21(undefined_3);
+var String6 = /* @__PURE__ */ make21(string2);
 var StringForLiteralAutocomplete = String6;
-var Number6 = /* @__PURE__ */ make23(number2);
-var Boolean3 = /* @__PURE__ */ make23(boolean);
-var Symbol3 = /* @__PURE__ */ make23(symbol3);
-var BigInt6 = /* @__PURE__ */ make23(bigInt);
-var Void2 = /* @__PURE__ */ make23(void_5);
-var ObjectKeyword2 = /* @__PURE__ */ make23(objectKeyword);
+var Number6 = /* @__PURE__ */ make21(number2);
+var Boolean3 = /* @__PURE__ */ make21(boolean);
+var Symbol3 = /* @__PURE__ */ make21(symbol3);
+var BigInt6 = /* @__PURE__ */ make21(bigInt);
+var Void2 = /* @__PURE__ */ make21(void_4);
+var ObjectKeyword2 = /* @__PURE__ */ make21(objectKeyword);
 function UniqueSymbol2(symbol4) {
-  return make23(new UniqueSymbol(symbol4));
+  return make21(new UniqueSymbol(symbol4));
 }
 function makeStruct(ast, fields) {
-  return make23(ast, {
+  return make21(ast, {
     fields,
     mapFields(f, options) {
       const fields2 = f(this.fields);
@@ -17772,19 +17533,19 @@ function extendTo(fields, derive) {
   };
 }
 function Record(key, value3) {
-  return make23(record(key.ast, value3.ast), {
+  return make21(record(key.ast, value3.ast), {
     key,
     value: value3
   });
 }
 function StructWithRest(schema, records) {
-  return make23(structWithRest(schema.ast, records.map(getAST)), {
+  return make21(structWithRest(schema.ast, records.map(getAST)), {
     schema,
     records
   });
 }
 function makeTuple(ast, elements) {
-  return make23(ast, {
+  return make21(ast, {
     elements,
     mapElements(f, options) {
       const elements2 = f(this.elements);
@@ -17796,12 +17557,12 @@ function Tuple2(elements) {
   return makeTuple(tuple(elements), elements);
 }
 function TupleWithRest(schema, rest) {
-  return make23(tupleWithRest(schema.ast, rest.map(getAST)), {
+  return make21(tupleWithRest(schema.ast, rest.map(getAST)), {
     schema,
     rest
   });
 }
-var ArraySchema = /* @__PURE__ */ lambda((schema) => make23(new Arrays(false, [], [schema.ast]), {
+var ArraySchema = /* @__PURE__ */ lambda((schema) => make21(new Arrays(false, [], [schema.ast]), {
   value: schema
 }));
 function withArrayLengthConstraints(self, minimum, maximum) {
@@ -17812,7 +17573,7 @@ function withArrayLengthConstraints(self, minimum, maximum) {
   if (maximum !== void 0) return self.check(isMaxLength(maximum));
   return self;
 }
-var NonEmptyArray = /* @__PURE__ */ lambda((schema) => make23(new Arrays(false, [schema.ast], [schema.ast]), {
+var NonEmptyArray = /* @__PURE__ */ lambda((schema) => make21(new Arrays(false, [schema.ast], [schema.ast]), {
   value: schema
 }));
 function ArrayEnsure(schema) {
@@ -17822,7 +17583,7 @@ function ArrayEnsure(schema) {
     decode: (value3) => [value3],
     encode: ([value3]) => value3
   }))(schema);
-  return make23(Union2([one, many]).pipe(decodeTo2(to)).ast, {
+  return make21(Union2([one, many]).pipe(decodeTo2(to)).ast, {
     from: Union2([schema, many]),
     to
   });
@@ -17830,11 +17591,11 @@ function ArrayEnsure(schema) {
 function UniqueArray(item) {
   return ArraySchema(item).check(isUnique());
 }
-var mutable2 = /* @__PURE__ */ lambda((schema) => make23(mutable(schema.ast), {
+var mutable2 = /* @__PURE__ */ lambda((schema) => make21(mutable(schema.ast), {
   schema
 }));
 function makeUnion(ast, members) {
-  return make23(ast, {
+  return make21(ast, {
     members,
     mapMembers(f, options) {
       const members2 = f(this.members);
@@ -17847,7 +17608,7 @@ function Union2(members, options) {
 }
 function Literals(literals) {
   const members = literals.map(Literal2);
-  return make23(union4(members, void 0, void 0), {
+  return make21(union4(members, void 0, void 0), {
     literals,
     members,
     mapMembers(f) {
@@ -17865,18 +17626,18 @@ var NullOr = /* @__PURE__ */ lambda((self) => Union2([self, Null2]));
 var UndefinedOr = /* @__PURE__ */ lambda((self) => Union2([self, Undefined2]));
 var NullishOr = /* @__PURE__ */ lambda((self) => Union2([self, Null2, Undefined2]));
 function suspend3(f) {
-  return make23(new Suspend(() => f().ast));
+  return make21(new Suspend(() => f().ast));
 }
 function check(...checks) {
   return (self) => self.check(...checks);
 }
 function refine(refinement, annotations) {
-  return (schema) => make23(appendChecks(schema.ast, [makeFilterByGuard(refinement, annotations)]), {
+  return (schema) => make21(appendChecks(schema.ast, [makeFilterByGuard(refinement, annotations)]), {
     schema
   });
 }
 function brand(identifier2) {
-  return (schema) => make23(schema.ast, {
+  return (schema) => make21(schema.ast, {
     schema,
     identifier: identifier2
   });
@@ -17888,12 +17649,12 @@ function fromBrand(identifier2, ctor) {
   );
 }
 function middlewareDecoding2(decode5) {
-  return (schema) => make23(middlewareDecoding(schema.ast, new Middleware(decode5, identity)), {
+  return (schema) => make21(middlewareDecoding(schema.ast, new Middleware(decode5, identity)), {
     schema
   });
 }
 function middlewareEncoding2(encode5) {
-  return (schema) => make23(middlewareEncoding(schema.ast, new Middleware(identity, encode5)), {
+  return (schema) => make21(middlewareEncoding(schema.ast, new Middleware(identity, encode5)), {
     schema
   });
 }
@@ -17911,7 +17672,7 @@ function catchEncodingWithContext(f) {
 }
 function decodeTo2(to, transformation) {
   return (from) => {
-    return make23(decodeTo(from.ast, to.ast, transformation ? makeTransformation(transformation) : passthrough3()), {
+    return make21(decodeTo(from.ast, to.ast, transformation ? makeTransformation(transformation) : passthrough3()), {
       from,
       to
     });
@@ -17945,7 +17706,7 @@ function encode4(transformation) {
   };
 }
 function withConstructorDefault2(defaultValue) {
-  return (schema) => make23(withConstructorDefault(schema.ast, defaultValue), {
+  return (schema) => make21(withConstructorDefault(schema.ast, defaultValue), {
     schema
   });
 }
@@ -18054,18 +17815,18 @@ function toTaggedUnion(tag2) {
     function matchOrElse() {
       if (arguments.length === 2) {
         const cases3 = arguments[0];
-        const orElse3 = arguments[1];
+        const orElse2 = arguments[1];
         return function(value4) {
           const key2 = value4[tag2];
-          const handler2 = Object.hasOwn(cases3, key2) ? cases3[key2] ?? orElse3 : orElse3;
+          const handler2 = Object.hasOwn(cases3, key2) ? cases3[key2] ?? orElse2 : orElse2;
           return handler2(value4);
         };
       }
       const value3 = arguments[0];
       const cases2 = arguments[1];
-      const orElse2 = arguments[2];
+      const orElse = arguments[2];
       const key = value3[tag2];
-      const handler = Object.hasOwn(cases2, key) ? cases2[key] ?? orElse2 : orElse2;
+      const handler = Object.hasOwn(cases2, key) ? cases2[key] ?? orElse : orElse;
       return handler(value3);
     }
   };
@@ -18086,7 +17847,7 @@ function TaggedUnion(casesByTag) {
     match: match7,
     matchOrElse
   } = toTaggedUnion("_tag")(union5);
-  return make23(union5.ast, {
+  return make21(union5.ast, {
     tag: tag2,
     cases,
     isAnyOf,
@@ -18458,7 +18219,7 @@ function isUncapitalized(annotations) {
     ...annotations
   });
 }
-var Finite = /* @__PURE__ */ make23(finite);
+var Finite = /* @__PURE__ */ make21(finite);
 var isFinite3 = isFinite2;
 function makeIsGreaterThan(options) {
   const gt = isGreaterThan(options.order);
@@ -19446,7 +19207,7 @@ function ReadonlyMap(key, value3) {
       encode: (map10) => [...map10.entries()]
     }))
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     key,
     value: value3
   });
@@ -19480,7 +19241,7 @@ function ReadonlySet(value3) {
       encode: (set6) => [...set6.values()]
     }))
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     value: value3
   });
 }
@@ -19665,7 +19426,7 @@ var NumberFromString = /* @__PURE__ */ String6.annotate({
 var FiniteFromString = /* @__PURE__ */ String6.annotate({
   expected: "a string that will be decoded as a finite number"
 }).pipe(/* @__PURE__ */ decodeTo2(Finite, numberFromString));
-var BigIntFromString = /* @__PURE__ */ make23(bigIntString).pipe(/* @__PURE__ */ decodeTo2(BigInt6, bigintFromString));
+var BigIntFromString = /* @__PURE__ */ make21(bigIntString).pipe(/* @__PURE__ */ decodeTo2(BigInt6, bigintFromString));
 var Trimmed = /* @__PURE__ */ String6.check(/* @__PURE__ */ isTrimmed());
 var Trim = /* @__PURE__ */ String6.annotate({
   expected: "a string that will be decoded as a trimmed string"
@@ -19868,7 +19629,7 @@ function CauseReason(error, defect) {
       }
     }))
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     error,
     defect
   });
@@ -19905,15 +19666,15 @@ function Cause(error, defect) {
       }) => failures
     }))
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     error,
     defect
   });
 }
 function chunkLink(values2) {
   return link()(values2, transform2({
-    decode: fromIterable3,
-    encode: fromIterable2
+    decode: fromIterable2,
+    encode: fromIterable
   }));
 }
 function Chunk(value3) {
@@ -19921,8 +19682,8 @@ function Chunk(value3) {
     const values2 = ArraySchema(value4);
     return (input, ast, options) => {
       if (isChunk(input)) {
-        return mapBothEager2(decodeUnknownEffect(values2)(fromIterable2(input), options), {
-          onSuccess: fromIterable3,
+        return mapBothEager2(decodeUnknownEffect(values2)(fromIterable(input), options), {
+          onSuccess: fromIterable2,
           onFailure: (issue) => makeCompositeAtKey(ast, "values", issue, input, options)
         });
       }
@@ -19945,15 +19706,15 @@ function Chunk(value3) {
       constraint,
       typeParameters: [value4]
     }) => chunkLink(withArrayLengthConstraints(ArraySchema(value4), constraint?.minLength, constraint?.maxLength)),
-    toEquivalence: ([value4]) => makeEquivalence5(value4)
+    toEquivalence: ([value4]) => makeEquivalence4(value4)
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     value: value3
   });
 }
 function dateTimeUtcFromInput() {
   return transformEffect((input, options) => {
-    return match(make11(input), {
+    return match(make9(input), {
       onNone: () => fail5(new InvalidValue({
         message: "Invalid DateTime input"
       }, input, options)),
@@ -19989,7 +19750,7 @@ var timeZoneFromString = /* @__PURE__ */ transformEffect2({
 });
 var dateTimeUtcFromString = /* @__PURE__ */ transformEffect2({
   decode: (s, options) => {
-    return match(make11(s), {
+    return match(make9(s), {
       onNone: () => fail5(new InvalidValue({
         expected: "a valid UTC DateTime string"
       }, s, options)),
@@ -20538,7 +20299,7 @@ function Exit(value3, error, defect) {
       }
     }))
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     value: value3,
     error,
     defect
@@ -20676,7 +20437,7 @@ function Graph(type, node, edge) {
     }) => graphToArbitrary(type, node2, edge2),
     toEquivalence: ([node2, edge2]) => graphToEquivalence(node2, edge2)
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     type,
     node,
     edge
@@ -20684,7 +20445,7 @@ function Graph(type, node, edge) {
 }
 function hashMapLink(entries3) {
   return link()(entries3, transform2({
-    decode: fromIterable5,
+    decode: fromIterable4,
     encode: toEntries
   }));
 }
@@ -20694,7 +20455,7 @@ function HashMap(key, value3) {
     return (input, ast, options) => {
       if (isHashMap2(input)) {
         return mapBothEager2(decodeUnknownEffect(entries3)(toEntries(input), options), {
-          onSuccess: fromIterable5,
+          onSuccess: fromIterable4,
           onFailure: (issue) => makeCompositeAtKey(ast, "entries", issue, input, options)
         });
       }
@@ -20720,15 +20481,15 @@ function HashMap(key, value3) {
     }) => hashMapLink(withArrayLengthConstraints(ArraySchema(Tuple2([key2, value4])).check(isUniqueKey()), constraint?.minSize, constraint?.maxSize)),
     toEquivalence: ([key2, value4]) => makeCompareMap(key2, value4)
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     key,
     value: value3
   });
 }
 function hashSetLink(values2) {
   return link()(values2, transform2({
-    decode: fromIterable7,
-    encode: fromIterable2
+    decode: fromIterable6,
+    encode: fromIterable
   }));
 }
 function HashSet(value3) {
@@ -20736,8 +20497,8 @@ function HashSet(value3) {
     const values2 = ArraySchema(value4);
     return (input, ast, options) => {
       if (isHashSet2(input)) {
-        return mapBothEager2(decodeUnknownEffect(values2)(fromIterable2(input), options), {
-          onSuccess: fromIterable7,
+        return mapBothEager2(decodeUnknownEffect(values2)(fromIterable(input), options), {
+          onSuccess: fromIterable6,
           onFailure: (issue) => makeCompositeAtKey(ast, "values", issue, input, options)
         });
       }
@@ -20762,7 +20523,7 @@ function HashSet(value3) {
     }) => hashSetLink(withArrayLengthConstraints(ArraySchema(value4).check(isUnique()), constraint?.minSize, constraint?.maxSize)),
     toEquivalence: ([value4]) => makeCompareSet(value4)
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     value: value3
   });
 }
@@ -20806,7 +20567,7 @@ function Option(value3) {
       }
     }))
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     value: value3
   });
 }
@@ -20853,7 +20614,7 @@ var Cookies = /* @__PURE__ */ declare(isCookies, {
 });
 var RecordFromCookies = /* @__PURE__ */ Cookies.pipe(/* @__PURE__ */ decodeTo2(/* @__PURE__ */ Record(String6, String6), /* @__PURE__ */ transform2({
   decode: toRecord,
-  encode: (self) => fromIterable8(globalThis.Object.entries(self).map(([name, value3]) => makeCookieUnsafe(name, value3)))
+  encode: (self) => fromIterable7(globalThis.Object.entries(self).map(([name, value3]) => makeCookieUnsafe(name, value3)))
 })));
 var Headers = /* @__PURE__ */ declare(isHeaders, {
   representation: {
@@ -20908,7 +20669,7 @@ var UrlParams = /* @__PURE__ */ declare(isUrlParams, {
   expected: "UrlParams",
   toEquivalence: () => Equivalence6,
   toCodec: () => link()(ArraySchema(Tuple2([String6, String6])), transform2({
-    decode: make15,
+    decode: make13,
     encode: (self) => self.params.map(([key, value3]) => [key, unwrap(value3)])
   }))
 });
@@ -20917,7 +20678,7 @@ var JsonFromUrlParamsField = (field, options) => UrlParams.pipe(decodeTo2(fromJs
     onNone: () => fail5(new Pointer([field], new MissingKey(void 0))),
     onSome: succeed5
   }),
-  encode: (value3) => succeed5(make15([[field, value3]]))
+  encode: (value3) => succeed5(make13([[field, value3]]))
 })));
 var RecordFromUrlParams = /* @__PURE__ */ UrlParams.pipe(/* @__PURE__ */ decodeTo2(/* @__PURE__ */ Record(String6, /* @__PURE__ */ Union2([String6, /* @__PURE__ */ NonEmptyArray(String6)])), /* @__PURE__ */ transform2({
   decode: toReadonlyRecord,
@@ -20951,9 +20712,9 @@ function Redacted(value3, options) {
   const decodeLabel = label !== void 0 ? decodeUnknownEffect(Literal2(label)) : void 0;
   const schema = declareConstructor()([value3], ([value4]) => (input, ast, poptions) => {
     if (isRedacted(input)) {
-      const label2 = decodeLabel !== void 0 ? mapErrorEager2(decodeLabel(input.label, poptions), (issue) => new Pointer(["label"], issue)) : void_4;
+      const label2 = decodeLabel !== void 0 ? mapErrorEager2(decodeLabel(input.label, poptions), (issue) => new Pointer(["label"], issue)) : void_3;
       return flatMapEager2(label2, () => mapBothEager2(decodeUnknownEffect(value4)(value2(input), poptions), {
-        onSuccess: (value5) => make14(value5, {
+        onSuccess: (value5) => make12(value5, {
           label: input.label
         }),
         onFailure: () => {
@@ -20976,14 +20737,14 @@ function Redacted(value3, options) {
     }),
     expected: "Redacted",
     toCodecJson: ([value4]) => link()(value4, {
-      decode: transform((e) => make14(e, {
+      decode: transform((e) => make12(e, {
         label
       })),
       encode: disallowJsonEncode ? forbidden((oe) => "Cannot serialize Redacted" + (isSome2(oe) && typeof oe.value.label === "string" ? ` with label: "${oe.value.label}"` : "")) : transform(value2)
     }),
-    toEquivalence: ([value4]) => makeEquivalence6(value4)
+    toEquivalence: ([value4]) => makeEquivalence5(value4)
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     value: value3
   });
 }
@@ -20992,7 +20753,7 @@ function RedactedFromValue(value3, options) {
     label: options?.label,
     disallowJsonEncode: options?.disallowEncode
   }), {
-    decode: transform((t) => make14(t, {
+    decode: transform((t) => make12(t, {
       label: options?.label
     })),
     encode: options?.disallowEncode ? forbidden((oe) => "Cannot encode Redacted" + (isSome2(oe) && typeof oe.value.label === "string" ? ` with label: "${oe.value.label}"` : "")) : transform(value2)
@@ -21045,7 +20806,7 @@ function Result(success, failure) {
       }
     }))
   });
-  return make23(schema.ast, {
+  return make21(schema.ast, {
     success,
     failure
   });
@@ -21080,7 +20841,7 @@ var SemVer = /* @__PURE__ */ declare(isSemVer, {
   toCodecArbitrary: () => linkDecoding()(Struct({
     ...SemVerCoreArbitrary.fields,
     build: ArraySchema(String6.check(isPattern2(/^[0-9A-Za-z-]+$/)))
-  }), transform(make22)),
+  }), transform(make20)),
   toCodecJson: () => link()(SemVerString, semVerFromString),
   toFormatter: () => format7
 });
@@ -21106,7 +20867,7 @@ var SemVerRange = /* @__PURE__ */ declare(isSemVerRange, {
   })).check(isMinLength(1))), transform((sets) => parseUnsafe(sets.map((set6) => set6.map(({
     operator,
     version
-  }) => `${operator}${format7(make22(version))}`).join(" ")).join(" || ")))),
+  }) => `${operator}${format7(make20(version))}`).join(" ")).join(" || ")))),
   toCodecJson: () => link()(SemVerRangeString, semVerRangeFromString),
   toFormatter: () => format8
 });
@@ -21147,7 +20908,7 @@ function makeClass(Inherited, identifier2, struct2, annotations, proto) {
       return getClassSchema(this).rebuild(ast);
     }
     static make(input, options) {
-      return make17(getClassSchema(this))(input ?? {}, options);
+      return make15(getClassSchema(this))(input ?? {}, options);
     }
     static makeOption(input, options) {
       return makeOption(getClassSchema(this))(input ?? {}, options);
@@ -21209,7 +20970,7 @@ function getClassSchemaFactory(from, identifier2, annotations) {
     const ClassTypeId = getClassTypeId(identifier2);
     const isClassValue = (input) => input instanceof self || hasProperty(input, ClassTypeId);
     const transformation = getClassTransformation(self);
-    const to = make23(new Declaration([from.ast], () => (input, ast, options) => {
+    const to = make21(new Declaration([from.ast], () => (input, ast, options) => {
       return isClassValue(input) ? succeed5(input) : fail5(new InvalidType(ast, input, options));
     }, {
       identifier: identifier2,
@@ -21310,7 +21071,7 @@ function toIsoFocus2(schema) {
 }
 function overrideToCodecIso(to, transformation) {
   return (schema) => {
-    return make23(annotate(schema.ast, {
+    return make21(annotate(schema.ast, {
       toCodecIso: () => new Link(to.ast, makeTransformation(transformation))
     }), {
       schema
@@ -21325,7 +21086,7 @@ function Tree(node) {
   const Tree2 = Union2([node, ArraySchema(Tree$ref), Record(String6, Tree$ref)]);
   return Tree2;
 }
-var Json2 = /* @__PURE__ */ make23(/* @__PURE__ */ annotate(Json, {
+var Json2 = /* @__PURE__ */ make21(/* @__PURE__ */ annotate(Json, {
   toCode: () => ({
     runtime: "Schema.Json",
     Type: "Schema.Json"
@@ -21338,7 +21099,7 @@ var JsonError = /* @__PURE__ */ Struct({
   stack: /* @__PURE__ */ optionalKey2(String6),
   cause: /* @__PURE__ */ optionalKey2(Json2)
 });
-var MutableJson2 = /* @__PURE__ */ make23(/* @__PURE__ */ annotate(MutableJson, {
+var MutableJson2 = /* @__PURE__ */ make21(/* @__PURE__ */ annotate(MutableJson, {
   toCode: () => ({
     runtime: "Schema.MutableJson",
     Type: "Schema.MutableJson"
@@ -21363,7 +21124,7 @@ var MutableRefProto = {
     };
   }
 };
-var make24 = (value3) => {
+var make22 = (value3) => {
   const ref = Object.create(MutableRefProto);
   ref.current = value3;
   return ref;
@@ -21381,7 +21142,7 @@ __export(Ref_exports, {
   getAndUpdate: () => getAndUpdate,
   getAndUpdateSome: () => getAndUpdateSome,
   getUnsafe: () => getUnsafe3,
-  make: () => make25,
+  make: () => make23,
   makeUnsafe: () => makeUnsafe7,
   modify: () => modify3,
   modifySome: () => modifySome,
@@ -21407,10 +21168,10 @@ var RefProto = {
 };
 var makeUnsafe7 = (value3) => {
   const self = Object.create(RefProto);
-  self.ref = make24(value3);
+  self.ref = make22(value3);
   return self;
 };
-var make25 = (value3) => sync2(() => makeUnsafe7(value3));
+var make23 = (value3) => sync2(() => makeUnsafe7(value3));
 var get5 = (self) => sync2(() => self.ref.current);
 var set5 = /* @__PURE__ */ dual(2, (self, value3) => sync2(() => set4(self.ref, value3)));
 var getAndSet = /* @__PURE__ */ dual(2, (self, value3) => sync2(() => {
@@ -21494,7 +21255,6 @@ var render = (element, ...children) => Effect_exports.runSync(Effect_exports.syn
   append2(element, children);
   return element;
 }));
-var $ = (selector, root = document) => root.querySelector(selector);
 var SVG_NS = "http://www.w3.org/2000/svg";
 var ICONS = {
   add: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z",
@@ -21565,555 +21325,372 @@ var formatBytes = (number3) => {
   return `${String(value3 < 10 && index2 > 0 ? value3.toFixed(1) : Math.round(value3))} ${units[index2]}`;
 };
 
+// public/generated/contracts.ts
+var WireConstants = {
+  appUrl: "https://krusegit.github.io/i6-share/",
+  chunkSize: 4194304,
+  maxBody: 4259840,
+  pairTokenTtlMs: 6e5,
+  port: 47616,
+  protocolVersion: 1,
+  syncWaitMs: 25e3
+};
+var AdminSettingsRequestSchema = Schema_exports.Struct({
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "receiveDirectory": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var DeviceSummarySchema = Schema_exports.Struct({
+  "deviceId": Schema_exports.String,
+  "name": Schema_exports.String,
+  "os": Schema_exports.String,
+  "pairedAt": Schema_exports.Number,
+  "lastSeen": Schema_exports.Number,
+  "lastAddr": Schema_exports.String,
+  "online": Schema_exports.Boolean
+});
+var TransferFileSummarySchema = Schema_exports.Struct({
+  "name": Schema_exports.String,
+  "originalName": Schema_exports.String,
+  "size": Schema_exports.Number,
+  "type": Schema_exports.String,
+  "bytes": Schema_exports.Number,
+  "done": Schema_exports.Boolean,
+  "where": Schema_exports.NullOr(Schema_exports.String)
+});
+var IncomingTransferSummarySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "deviceId": Schema_exports.String,
+  "deviceName": Schema_exports.String,
+  "files": Schema_exports.Array(TransferFileSummarySchema),
+  "count": Schema_exports.Number,
+  "done": Schema_exports.Number,
+  "bytes": Schema_exports.Number,
+  "total": Schema_exports.Number,
+  "complete": Schema_exports.Boolean,
+  "speed": Schema_exports.Number,
+  "createdAt": Schema_exports.Number,
+  "lastActivity": Schema_exports.Number
+});
+var FileMetadataSchema = Schema_exports.Struct({
+  "name": Schema_exports.String,
+  "size": Schema_exports.Number,
+  "type": Schema_exports.String,
+  "lastModified": Schema_exports.Number
+});
+var OutboxSummarySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "deviceId": Schema_exports.String,
+  "createdAt": Schema_exports.Number,
+  "files": Schema_exports.Array(FileMetadataSchema),
+  "count": Schema_exports.Number,
+  "bytes": Schema_exports.Number,
+  "total": Schema_exports.Number,
+  "speed": Schema_exports.Number,
+  "started": Schema_exports.Boolean
+});
+var ReceivedFileSummarySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "deviceId": Schema_exports.String,
+  "deviceName": Schema_exports.String,
+  "name": Schema_exports.String,
+  "originalName": Schema_exports.String,
+  "size": Schema_exports.Number,
+  "type": Schema_exports.String,
+  "where": Schema_exports.NullOr(Schema_exports.String),
+  "at": Schema_exports.Number
+});
+var AdminStatusResponseSchema = Schema_exports.Struct({
+  "hubId": Schema_exports.String,
+  "name": Schema_exports.String,
+  "receiveDirectory": Schema_exports.String,
+  "port": Schema_exports.Number,
+  "addrs": Schema_exports.Array(Schema_exports.String),
+  "devices": Schema_exports.Array(DeviceSummarySchema),
+  "transfers": Schema_exports.Array(IncomingTransferSummarySchema),
+  "outbox": Schema_exports.Array(OutboxSummarySchema),
+  "history": Schema_exports.Array(ReceivedFileSummarySchema)
+});
+var ErrorResponseSchema = Schema_exports.Struct({
+  "error": Schema_exports.String
+});
+var HelloResponseSchema = Schema_exports.Struct({
+  "app": Schema_exports.Literal("i6-share-hub"),
+  "v": Schema_exports.Number,
+  "id": Schema_exports.String,
+  "name": Schema_exports.String,
+  "port": Schema_exports.Number,
+  "addrs": Schema_exports.Array(Schema_exports.String)
+});
+var OfferedFileMetadataSchema = Schema_exports.Struct({
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "size": Schema_exports.Number,
+  "type": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "lastModified": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.Number))
+});
+var OfferRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "files": Schema_exports.Array(OfferedFileMetadataSchema)
+});
+var OfferResponseSchema = Schema_exports.Struct({
+  "received": Schema_exports.Array(Schema_exports.Number)
+});
+var OperationResponseSchema = Schema_exports.Struct({
+  "ok": Schema_exports.Boolean
+});
+var OutboxEntrySchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "files": Schema_exports.Array(FileMetadataSchema)
+});
+var PairCodeResponseSchema = Schema_exports.Struct({
+  "payload": Schema_exports.String,
+  "link": Schema_exports.String,
+  "expiresAt": Schema_exports.Number
+});
+var PairRequestSchema = Schema_exports.Struct({
+  "deviceId": Schema_exports.String,
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "os": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var PairResponseSchema = Schema_exports.Struct({
+  "secret": Schema_exports.String,
+  "hubId": Schema_exports.String,
+  "name": Schema_exports.String
+});
+var PullRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "i": Schema_exports.Number,
+  "offset": Schema_exports.Number,
+  "length": Schema_exports.Number
+});
+var PullResponseSchema = Schema_exports.Struct({
+  "size": Schema_exports.Number
+});
+var PutRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String,
+  "i": Schema_exports.Number,
+  "offset": Schema_exports.Number
+});
+var PutResponseSchema = Schema_exports.Struct({
+  "bytes": Schema_exports.Number,
+  "error": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var QueueFilesRequestSchema = Schema_exports.Struct({
+  "deviceId": Schema_exports.String,
+  "paths": Schema_exports.Array(Schema_exports.String)
+});
+var QueueFilesResponseSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String
+});
+var SyncRequestSchema = Schema_exports.Struct({
+  "wait": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.Number)),
+  "name": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String)),
+  "os": Schema_exports.optionalKey(Schema_exports.NullOr(Schema_exports.String))
+});
+var SyncResponseSchema = Schema_exports.Struct({
+  "name": Schema_exports.String,
+  "addrs": Schema_exports.Array(Schema_exports.String),
+  "outbox": Schema_exports.Array(OutboxEntrySchema)
+});
+var TransferRequestSchema = Schema_exports.Struct({
+  "tid": Schema_exports.String
+});
+var UnpairRequestSchema = Schema_exports.Struct({});
+var WireResponseDecoders = {
+  cancel: Schema_exports.decodeUnknownSync(OperationResponseSchema),
+  end: Schema_exports.decodeUnknownSync(OperationResponseSchema),
+  offer: Schema_exports.decodeUnknownSync(OfferResponseSchema),
+  pair: Schema_exports.decodeUnknownSync(PairResponseSchema),
+  pull: Schema_exports.decodeUnknownSync(PullResponseSchema),
+  pulled: Schema_exports.decodeUnknownSync(OperationResponseSchema),
+  put: Schema_exports.decodeUnknownSync(PutResponseSchema),
+  sync: Schema_exports.decodeUnknownSync(SyncResponseSchema),
+  unpair: Schema_exports.decodeUnknownSync(OperationResponseSchema)
+};
+
 // public/lib/proto.ts
-var PORT = 47616;
-var APP_URL = "https://krusegit.github.io/i6-share/";
-var CHUNK_SIZE = 4 * 1024 * 1024;
-var MAX_BODY = CHUNK_SIZE + 64 * 1024;
-var PAIR_TOKEN_TTL_MS = 10 * 60 * 1e3;
+var PROTOCOL_VERSION = WireConstants.protocolVersion;
+var PORT = WireConstants.port;
+var APP_URL = WireConstants.appUrl;
+var CHUNK_SIZE = WireConstants.chunkSize;
+var MAX_BODY = WireConstants.maxBody;
+var SYNC_WAIT_MS = WireConstants.syncWaitMs;
+var PAIR_TOKEN_TTL_MS = WireConstants.pairTokenTtlMs;
 var enc = new TextEncoder();
 var dec = new TextDecoder();
 
 // public/setup/setup.ts
-var STORE_KEY = "i6-setup-v1";
-var MIN_CHROME = 120;
-var IWA_DEV_PAGE = 154;
-var BUNDLE_URL = "../hub/i6-share-hub.swbn";
-var VERSION_URL = "../hub/version.json";
-var BrandSchema = Schema_exports.Struct({ brand: Schema_exports.String, version: Schema_exports.String });
-var BrandsSchema = Schema_exports.Array(BrandSchema);
+var STORE_KEY = "i6-native-setup-v1";
 var StateSchema = Schema_exports.Struct({ active: Schema_exports.Int, done: Schema_exports.Array(Schema_exports.Int) });
-var emptyState = { active: 0, done: [] };
-var attempt2 = (run2) => Effect_exports.tryPromise({ try: run2, catch: (error) => error });
-var normalizeOs = (platform) => {
-  if (platform.length === 0) return "unknown";
-  if (/linux/i.test(platform)) return "Linux";
-  if (/chrome ?os|cros/i.test(platform)) return "ChromeOS";
-  if (/android/i.test(platform)) return "Android";
-  if (/windows/i.test(platform)) return "Windows";
-  if (/mac/i.test(platform)) return "macOS";
-  return platform;
+var ArtifactSchema = Schema_exports.Struct({ file: Schema_exports.String, sha256: Schema_exports.String, size: Schema_exports.Number });
+var ReleaseSchema = Schema_exports.Struct({ version: Schema_exports.String, artifacts: Schema_exports.Struct({ "linux-x64": ArtifactSchema, "linux-arm64": ArtifactSchema }) });
+var initialState = { active: 0, done: [] };
+var attempt2 = (operation) => Effect_exports.tryPromise({ try: operation, catch: (error) => error });
+var p = (...children) => h("p", null, ...children);
+var required2 = (selector) => {
+  const element = document.querySelector(selector);
+  if (!(element instanceof HTMLElement)) throw new Error(`Missing setup element: ${selector}`);
+  return element;
 };
-var osFromUserAgent = (ua) => {
-  const candidates = [[/Android/, "Android"], [/CrOS/, "ChromeOS"], [/Linux|X11/, "Linux"], [/Windows/, "Windows"], [/Mac OS X|Macintosh/, "macOS"], [/iPhone|iPad/, "iOS"]];
-  return candidates.find(([pattern]) => pattern.test(ua))?.[1] ?? "unknown";
-};
-var isEntropyReader = (value3) => typeof value3 === "function";
-var detectBrowser = (source) => Effect_exports.gen(function* () {
-  const raw = "userAgentData" in source ? source.userAgentData : void 0;
-  const ua = source.userAgent;
-  const data = typeof raw === "object" && raw !== null ? raw : {};
-  const platform = "platform" in data && typeof data.platform === "string" ? normalizeOs(data.platform) : "unknown";
-  const low = "brands" in data ? data.brands : [];
-  const high = yield* attempt2(async () => {
-    if ("getHighEntropyValues" in data && isEntropyReader(data.getHighEntropyValues)) {
-      const result3 = await data.getHighEntropyValues(["fullVersionList"]);
-      return typeof result3 === "object" && result3 !== null && "fullVersionList" in result3 ? result3.fullVersionList : low;
-    }
-    return low;
-  }).pipe(Effect_exports.orElseSucceed(() => low));
-  const parsed = Schema_exports.decodeUnknownOption(BrandsSchema)(high);
-  const brands = parsed._tag === "Some" && parsed.value.length > 0 ? parsed.value : Schema_exports.decodeUnknownOption(BrandsSchema)(low).pipe(Option_exports.getOrElse(() => []));
-  const chromium = brands.find((brand2) => brand2.brand === "Chromium");
-  const chrome = brands.find((brand2) => brand2.brand === "Google Chrome");
-  const other = brands.find((brand2) => !/Chromium|Google Chrome|Not.?A.?Brand/i.test(brand2.brand));
-  const match7 = /(?:Chrome|Chromium)\/(\d+)/.exec(ua);
-  const major = chromium === void 0 ? Number(match7?.[1] ?? 0) : Number.parseInt(chromium.version, 10) || 0;
-  const uaBrowser = ua.includes("Edg/") ? "Microsoft Edge" : ua.includes("OPR/") ? "Opera" : ua.includes("Chromium/") ? "Chromium" : "Google Chrome";
-  const nonChromium = ua.includes("Firefox/") ? "Firefox" : ua.includes("Safari/") ? "Safari" : "an unknown browser";
-  return { browser: chromium === void 0 ? match7 === null ? nonChromium : uaBrowser : chrome === void 0 ? other?.brand ?? "Chromium" : "Google Chrome", major, os: platform === "unknown" ? osFromUserAgent(ua) : platform, chromiumBased: chromium !== void 0 || match7 !== null };
-});
-var loadState = (storage) => Effect_exports.runSync(Effect_exports.try(() => Schema_exports.decodeUnknownSync(StateSchema)(JSON.parse(storage.getItem(STORE_KEY) ?? "null"))).pipe(Effect_exports.orElseSucceed(() => emptyState)));
+var loadState = (storage) => Effect_exports.runSync(
+  Effect_exports.try(() => Schema_exports.decodeUnknownSync(StateSchema)(JSON.parse(storage.getItem(STORE_KEY) ?? "null"))).pipe(Effect_exports.orElseSucceed(() => initialState))
+);
 var nextActive = (state, index2) => ({ ...state, active: state.active === index2 ? -1 : index2 });
 var withDone = (state, index2) => ({ ...state, done: state.done.includes(index2) ? state.done : [...state.done, index2] });
 var createSetup = () => {
-  const UPDATE_URL = new URL("../hub/update.json", location.href).href;
-  const stateRef = Effect_exports.runSync(Ref_exports.make(loadState(localStorage)));
-  const browserRef = Effect_exports.runSync(Ref_exports.make({ browser: "unknown", major: 0, os: "unknown", chromiumBased: false }));
-  const getState = () => Effect_exports.runSync(Ref_exports.get(stateRef));
-  const getBrowser = () => Effect_exports.runSync(Ref_exports.get(browserRef));
-  const saveState = () => {
-    Effect_exports.runSync(Effect_exports.try(() => {
-      localStorage.setItem(STORE_KEY, JSON.stringify(getState()));
-    }).pipe(Effect_exports.ignore));
+  const state = Ref_exports.makeUnsafe(loadState(localStorage));
+  const lifetime = new AbortController();
+  const read = () => Effect_exports.runSync(Ref_exports.get(state));
+  const save = () => {
+    Effect_exports.runSync(Effect_exports.ignore(Effect_exports.try(() => {
+      localStorage.setItem(STORE_KEY, JSON.stringify(read()));
+    })));
   };
-  const isChromeOrChromium = () => getBrowser().browser === "Google Chrome" || getBrowser().browser === "Chromium";
-  const useIwaDev = () => getBrowser().major === 0 || getBrowser().major >= IWA_DEV_PAGE;
-  const p = (...c) => h("p", null, ...c);
-  const strong = (t) => h("strong", { text: t });
-  const ol = (...items) => h("ol", { class: "setup-list" }, items.map((i) => h("li", null, i)));
-  const ul = (...items) => h("ul", { class: "setup-list" }, items.map((i) => h("li", null, i)));
-  function checkRow(ok, title, detail) {
-    const kind = ok === true ? "ok" : ok === false ? "bad" : "warn";
-    return h(
-      "div",
-      { class: `setup-check setup-check--${kind}` },
-      icon(kind === "ok" ? "check_circle" : kind === "bad" ? "error" : "warning"),
-      h("div", { class: "grow" }, h("div", { class: "setup-check__title", text: title }), detail && h("div", { class: "caption", text: detail }))
-    );
-  }
-  function banner(kind, iconName, ...content) {
-    return h("div", { class: `banner banner--${kind}` }, icon(iconName), h("div", { class: "grow" }, ...content));
-  }
-  const STEPS = [
+  const transition = (change) => {
+    Effect_exports.runSync(Ref_exports.update(state, change));
+    save();
+  };
+  const installer = `curl -fsSL ${new URL("../install.sh", location.href).href} | bash`;
+  const loadVersion = async (target) => {
+    const result3 = await Effect_exports.runPromise(attempt2(async () => {
+      const response = await fetch("../downloads/version.json", { cache: "no-store", signal: lifetime.signal });
+      if (!response.ok) throw new Error("Release unavailable");
+      const json = await response.json();
+      return Schema_exports.decodeUnknownSync(ReleaseSchema)(json);
+    }).pipe(Effect_exports.match({ onFailure: () => null, onSuccess: (release) => release })));
+    if (lifetime.signal.aborted) return;
+    target.textContent = result3 === null ? "Release details unavailable. Try again when online." : `Version ${result3.version} \xB7 x64 ${formatBytes(result3.artifacts["linux-x64"].size)} \xB7 ARM64 ${formatBytes(result3.artifacts["linux-arm64"].size)}`;
+  };
+  const testConnection = async (control, target) => {
+    control.disabled = true;
+    target.textContent = "Checking this computer\u2026";
+    const response = await Effect_exports.runPromise(attempt2(async () => {
+      const result3 = await fetch(`http://127.0.0.1:${String(PORT)}/i6/hello`, {
+        signal: AbortSignal.any([lifetime.signal, AbortSignal.timeout(4e3)]),
+        cache: "no-store",
+        ...{ targetAddressSpace: "loopback" }
+      });
+      if (!result3.ok) throw new Error("Hub unavailable");
+      const json = await result3.json();
+      const hello = Schema_exports.decodeUnknownSync(HelloResponseSchema)(json);
+      return hello;
+    }).pipe(Effect_exports.match({ onFailure: () => null, onSuccess: (hello) => hello })));
+    if (lifetime.signal.aborted) return;
+    control.disabled = false;
+    target.textContent = response === null ? "Could not reach the hub. Start i6-share-hub on this computer, then retry. Allow local network access if the browser asks." : `Connected to ${response.name}. Open the local dashboard URL printed by the hub to pair your phone.`;
+    if (response !== null) {
+      transition((current) => withDone(current, 2));
+      update3();
+    }
+  };
+  const steps = [
     {
-      title: "Check your browser",
-      caption: "Google Chrome on Debian 13",
+      title: "Download the native hub",
+      caption: "Debian 13 / Ubuntu 24.04 or newer; x64 or ARM64",
       body: () => {
-        const rows = [];
-        if (!getBrowser().chromiumBased) {
-          rows.push(checkRow(
-            false,
-            `You're using ${getBrowser().browser}`,
-            "The hub needs Google Chrome or Chromium. Open this page in one of them."
-          ));
-        } else if (!isChromeOrChromium()) {
-          rows.push(checkRow(
-            null,
-            `${getBrowser().browser} ${String(getBrowser().major)}`,
-            "Isolated Web Apps are a Chrome feature and may be missing in other Chromium-based browsers. Google Chrome or Chromium is recommended."
-          ));
-        } else if (getBrowser().major < MIN_CHROME) {
-          rows.push(checkRow(
-            false,
-            `${getBrowser().browser} ${String(getBrowser().major)} is too old`,
-            `Isolated Web Apps need version ${String(MIN_CHROME)} or newer. Update your browser, then reload this page.`
-          ));
-        } else {
-          rows.push(checkRow(
-            true,
-            `${getBrowser().browser} ${String(getBrowser().major)}`,
-            /chromium/i.test(getBrowser().browser) ? "Supported, but Google Chrome is recommended (see below)." : "Good."
-          ));
-        }
-        if (getBrowser().os === "Linux") rows.push(checkRow(true, "Linux", "Supported."));
-        else if (getBrowser().os === "Android" || getBrowser().os === "iOS") {
-          rows.push(checkRow(false, getBrowser().os, "This guide is for the computer. On your phone, open the i6-share app instead."));
-        } else {
-          rows.push(checkRow(
-            null,
-            getBrowser().os === "unknown" ? "Unknown operating system" : getBrowser().os,
-            "i6-share is made for Linux. Other systems should work the same way but are not tested."
-          ));
-        }
+        const version = h("p", { class: "caption muted", text: "Checking the latest release\u2026" });
+        void loadVersion(version);
         return [
-          ...rows,
-          p(
-            "Use ",
-            strong("Google Chrome"),
-            ". In our tests on Debian 13, Debian\u2019s own ",
-            h("code", { text: "chromium" }),
-            " package (156) could not install signed Isolated Web Apps, while Google Chrome could. Install Google Chrome with:"
-          ),
-          codeBlock("wget -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt install -y /tmp/google-chrome.deb"),
-          p("Use the browser profile you normally use. The hub is installed into that Chrome profile.")
-        ];
-      }
-    },
-    {
-      title: "Enable Isolated Web Apps",
-      caption: "Two Chrome flags, then relaunch",
-      body: () => [
-        p("Web pages can't open ", h("code", { text: "chrome://" }), " links, so copy each address into a new tab:"),
-        codeBlock("chrome://flags/#enable-isolated-web-apps"),
-        codeBlock("chrome://flags/#enable-isolated-web-app-dev-mode"),
-        ol(
-          ["Set both ", strong("Isolated Web Apps"), " and ", strong("Isolated Web App Developer Mode"), " to ", strong("Enabled"), "."],
-          ["Click ", strong("Relaunch"), " at the bottom of the page. Your tabs come back, including this one."]
-        ),
-        banner("info", "info", h(
-          "span",
-          null,
-          "Developer Mode is needed because the hub is installed from a file rather than an app store. ",
-          "For now, this is the only way to install Isolated Web Apps on Linux."
-        ))
-      ]
-    },
-    {
-      title: "Download the hub",
-      caption: "i6-share-hub.swbn, a signed web bundle",
-      body: () => {
-        const meta = h("div", { class: "caption muted", text: "Checking the latest version\u2026" });
-        void loadVersion(meta);
-        return [
-          p("This file contains the whole hub app, signed so Chrome can verify it."),
+          p("The hub is a self-contained native executable for modern glibc Linux. Published builds target Debian 13 and Ubuntu 24.04 or newer. Use any browser for its local dashboard. Your phone still uses the installed PWA."),
           h(
             "div",
             { class: "setup-download" },
-            h(
-              "a",
-              { class: "btn btn--contained", href: BUNDLE_URL, attrs: { download: "i6-share-hub.swbn" } },
-              icon("download"),
-              h("span", { text: "Download hub" })
-            ),
-            meta
+            h("a", { class: "btn btn--contained", href: "../downloads/i6-share-hub-linux-x64.tar.gz", text: "Linux x64" }),
+            h("a", { class: "btn btn--outlined", href: "../downloads/i6-share-hub-linux-arm64.tar.gz", text: "Linux ARM64" })
           ),
-          p("Only needed for the command-line install in the next step \u2013 the recommended install fetches it by itself. If you download it, save it in your ", strong("Downloads"), " folder.")
+          version,
+          p("The installer below selects your architecture and verifies the archive SHA-256 against release metadata fetched over HTTPS.")
         ];
       }
     },
     {
-      title: "Install it",
-      caption: "From the update manifest, so Chrome keeps it up to date",
-      body: () => {
-        const iwaDev = [
-          p(
-            strong(`Chrome ${String(IWA_DEV_PAGE)} and newer:`),
-            " open ",
-            h("code", { text: "chrome://iwa-dev" }),
-            ", click ",
-            strong("Install"),
-            ", choose the ",
-            strong("Update Manifest"),
-            " tab, paste the address above, click ",
-            strong("Fetch"),
-            ", then ",
-            strong("Install"),
-            "."
-          )
-        ];
-        const internals = [
-          p(
-            strong(`Chrome ${String(MIN_CHROME)}\u2013${String(IWA_DEV_PAGE - 1)}:`),
-            " open ",
-            h("code", { text: "chrome://web-app-internals" }),
-            ", find ",
-            strong("Install IWA from Update Manifest"),
-            ", paste the address above, click ",
-            strong("Fetch"),
-            ", then ",
-            strong("Install"),
-            "."
-          )
-        ];
-        const first = useIwaDev() ? iwaDev : internals;
-        const second = useIwaDev() ? internals : iwaDev;
-        return [
-          p(strong("Recommended."), " Copy this address \u2013 it tells Chrome where the hub and its future versions live:"),
-          codeBlock(UPDATE_URL),
-          codeBlock(useIwaDev() ? "chrome://iwa-dev" : "chrome://web-app-internals"),
-          ...first,
-          p(
-            '"i6-share Hub" then appears in your app launcher. Chrome checks for new versions by itself; to update right away use ',
-            strong("Perform update now"),
-            " (or ",
-            strong("Update"),
-            ") on the same page while the hub window is closed. ",
-            "Your pairings and settings are kept."
-          ),
-          h(
-            "details",
-            { class: "setup-details" },
-            h("summary", { text: useIwaDev() ? "Older Chrome versions" : "Newer Chrome versions" }),
-            ...second
-          ),
-          h(
-            "details",
-            { class: "setup-details" },
-            h("summary", { text: "Install the downloaded file from the command line instead" }),
-            p("Quit Chrome completely (close every window), then run:"),
-            codeBlock('google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"'),
-            p("This works too, but Chrome does not update an app installed from a file, and installing a newer file over it fails with \u201CApp is already installed\u201D. The quick install above uses this method and updates the hub when you run it again.")
-          )
-        ];
-      }
-    },
-    {
-      title: "Open the firewall",
-      caption: `Allow TCP port ${String(PORT)} from your network`,
+      title: "Install or update",
+      caption: "A user-local installation; no administrator access",
       body: () => [
-        p("Your phone connects to the hub on port ", strong(String(PORT)), ". A fresh Debian 13 install has no firewall rules, so first check:"),
-        codeBlock("sudo nft list ruleset"),
-        p(strong("Empty output? Skip this step."), " Otherwise allow the port with whichever tool you use:"),
-        p(strong("nftables"), " (Debian 13 default, works with the stock /etc/nftables.conf):"),
-        codeBlock(`sudo nft insert rule inet filter input tcp dport ${String(PORT)} accept`),
-        p(strong("iptables:")),
-        codeBlock(`sudo iptables -I INPUT -p tcp --dport ${String(PORT)} -j ACCEPT && sudo ip6tables -I INPUT -p tcp --dport ${String(PORT)} -j ACCEPT`),
-        p(
-          "Both commands last until the next reboot. To make it permanent with nftables, add this line inside ",
-          h("code", { text: "chain input { \u2026 }" }),
-          " in ",
-          h("code", { text: "/etc/nftables.conf" }),
-          " and run ",
-          h("code", { text: "sudo systemctl enable --now nftables" }),
-          ":"
-        ),
-        codeBlock(`tcp dport ${String(PORT)} accept`)
+        codeBlock(installer),
+        p("Run as your normal Linux user. The installer keeps versions under ~/.local/share/i6-share/releases and creates ~/.local/bin/i6-share-hub plus an app-menu shortcut."),
+        p("Run the same command again to update. Stop a running hub with Ctrl+C first; existing processes continue using the old version until restarted. Data and pairings are kept separately."),
+        p("To roll back the executable to the previous installed version:"),
+        codeBlock(`${installer} -s -- --rollback`),
+        p("The installer does not change your firewall, browser settings, or login services.")
       ]
     },
     {
-      title: "Start the hub & test",
-      caption: "Launch it, pick a folder, check the connection",
+      title: "Start the hub and test",
+      caption: `Keep the dashboard open; TCP ${String(PORT)} receives files`,
       body: () => {
         const result3 = h("div", { class: "setup-test-result", attrs: { "aria-live": "polite" } });
-        const btn = button("Test connection", () => testConnection(btn, result3), "outlined", "refresh");
+        const control = button("Test connection", () => testConnection(control, result3), "outlined", "refresh");
         return [
-          ol(
-            ["Open ", strong("i6-share Hub"), " from your app launcher, or from ", h("code", { text: "chrome://apps" }), "."],
-            ["Choose the folder where received files should be saved, for example ", h("code", { text: "~/Downloads/i6-share" }), "."],
-            ["Keep the hub window open, or minimise it. It can only receive files while it runs."]
-          ),
-          codeBlock("chrome://apps"),
-          p("Then check that this browser can reach it:"),
-          h("div", { class: "setup-test" }, btn, result3)
+          codeBlock("~/.local/bin/i6-share-hub --open"),
+          p("The command opens a local dashboard in your browser. Use it to choose the receive folder and name this computer. Keep at least one dashboard tab open. Closing the last tab stops the backend automatically after a short reload grace period. Ctrl+C also stops it."),
+          p("Nothing starts at login. If your firewall blocks incoming traffic, allow TCP 47616 from your trusted local network using your firewall settings. Guest Wi-Fi isolation or a VPN can also block devices."),
+          h("div", { class: "setup-test" }, control, result3)
         ];
       }
     },
     {
       title: "Pair your phone",
-      caption: "Install the phone app and scan the QR code",
+      caption: "Scan the QR code in the local dashboard",
       body: () => [
-        ol(
-          ["On your Android phone, open this address in ", strong("Chrome"), ":", codeBlock(APP_URL)],
-          ["Tap ", strong("\u22EE"), " \u2192 ", strong("Install app"), " (or ", strong("Add to home screen"), ")."],
-          ["Scan the QR code shown in the hub, either with the camera app or with the scanner inside i6-share."],
-          ["When Chrome asks to let i6-share ", strong("access devices on your local network"), ", tap ", strong("Allow"), "."]
-        ),
-        banner("info", "share", h(
-          "span",
-          null,
-          "That's it. From now on, in Gallery or Files tap ",
-          strong("Share \u2192 i6-share"),
-          " and the files go straight to the hub's folder on this PC. No more questions."
-        ))
+        p("On Android, open the phone app in Chrome and install it from the browser menu:"),
+        codeBlock(APP_URL),
+        p("Scan the pairing QR code shown by the local dashboard, or copy its pairing link to the phone. Pairing codes expire after ten minutes and can be used once."),
+        p("Allow local network access when Chrome asks. Share files to i6-share, or use Send files. The hub saves them into your chosen folder."),
+        p("Moving from the previous browser-hosted hub? Pair again once: its browser storage cannot be imported automatically into the native backend.")
       ]
     }
   ];
-  async function loadVersion(el) {
-    try {
-      const res = await fetch(VERSION_URL, { cache: "no-cache", signal: AbortSignal.timeout(8e3) });
-      if (!res.ok) throw new Error(String(res.status));
-      const raw = await res.json();
-      const v = Schema_exports.decodeUnknownSync(Schema_exports.Struct({ version: Schema_exports.optional(Schema_exports.String), size: Schema_exports.optional(Schema_exports.Number), builtAt: Schema_exports.optional(Schema_exports.String), webBundleId: Schema_exports.optional(Schema_exports.String) }))(raw);
-      const parts2 = [];
-      if (v.version !== void 0 && v.version.length > 0) parts2.push(`Version ${v.version}`);
-      if (v.size !== void 0 && Number.isFinite(v.size)) parts2.push(formatBytes(v.size));
-      if (v.builtAt !== void 0 && v.builtAt.length > 0 && !Number.isNaN(Date.parse(v.builtAt))) parts2.push(`built ${new Date(v.builtAt).toLocaleDateString()}`);
-      render(el, parts2.join(" \xB7 ") || "Latest version");
-      if (v.webBundleId !== void 0 && v.webBundleId.length > 0) {
-        el.append(h("span", { class: "setup-bundle-id mono", text: `isolated-app://${v.webBundleId}/`, attrs: { title: "App identity (Web Bundle ID)" } }));
-      }
-    } catch {
-      render(el, "Version details unavailable. The download may not be published yet.");
-    }
-  }
-  async function testConnection(btn, out) {
-    btn.disabled = true;
-    render(out, h("div", { class: "row muted" }, h("span", { class: "status-dot status-dot--busy" }), "Connecting to the hub\u2026"));
-    try {
-      const options = {
-        targetAddressSpace: "loopback",
-        cache: "no-store",
-        signal: AbortSignal.timeout(4e3)
-      };
-      const res = await fetch(`http://127.0.0.1:${String(PORT)}/i6/hello`, options);
-      const info = await Effect_exports.runPromise(attempt2(async () => {
-        const raw = await res.json();
-        return Schema_exports.decodeUnknownSync(Schema_exports.Struct({ app: Schema_exports.String, addrs: Schema_exports.optional(Schema_exports.Array(Schema_exports.String)), name: Schema_exports.optional(Schema_exports.String), port: Schema_exports.optional(Schema_exports.Number) }))(raw);
-      }).pipe(Effect_exports.orElseSucceed(() => null)));
-      if (!res.ok || info?.app !== "i6-share-hub") {
-        render(out, banner("warning", "warning", p(
-          `Something answered on port ${String(PORT)}, but it isn't the i6-share Hub. `,
-          "Close the other program using this port and try again."
-        )));
-        return;
-      }
-      const addrs = (info.addrs ?? []).filter(Boolean);
-      render(out, h(
-        "div",
-        { class: "banner setup-ok" },
-        icon("check_circle"),
-        h(
-          "div",
-          { class: "grow" },
-          h("div", { class: "subtitle-2", text: `Connected to "${info.name === void 0 || info.name.length === 0 ? "i6-share Hub" : info.name}"` }),
-          addrs.length ? h(
-            "div",
-            null,
-            "Your phone will reach it at ",
-            addrs.map((a, i) => [i ? ", " : "", h("code", { text: a.includes(":") ? `[${a}]:${String(info.port === void 0 || info.port === 0 ? PORT : info.port)}` : `${a}:${String(info.port === void 0 || info.port === 0 ? PORT : info.port)}` })]),
-            "."
-          ) : h("div", { text: "The hub reports no network address yet. Is this PC connected to Wi-Fi or Ethernet?" })
-        )
-      ));
-      markDone(5);
-    } catch (e) {
-      const timeout3 = e instanceof Error && e.name === "TimeoutError";
-      render(out, banner(
-        "error",
-        "error",
-        h("div", { class: "subtitle-2", text: timeout3 ? "The hub didn't answer in time" : "Couldn't reach the hub" }),
-        ul(
-          ["Is the ", strong("i6-share Hub"), " window open? Start it from the app launcher."],
-          ["Did Chrome ask to allow access to ", strong("devices on your local network"), "? Choose ", strong("Allow"), " and test again."],
-          ["Blocked it by mistake? Click the icon left of the address bar \u2192 ", strong("Site settings"), " \u2192 ", strong("Local network access"), " \u2192 ", strong("Allow"), "."]
-        )
-      ));
-    } finally {
-      btn.disabled = false;
-    }
-  }
-  const stepsRef = Effect_exports.runSync(Ref_exports.make([]));
-  const stepEls = () => Effect_exports.runSync(Ref_exports.get(stepsRef));
-  const required2 = (selector) => {
-    const element = $(selector);
-    if (!(element instanceof HTMLElement)) throw new Error(`Missing setup element: ${selector}`);
-    return element;
+  const renderQuickInstall = () => {
+    const target = document.querySelector("#quick-install-body");
+    if (target === null) return;
+    render(
+      target,
+      codeBlock(installer),
+      p("Installs into your user account. No desktop Chrome, .NET runtime, root access, or login service is required."),
+      p(h("a", { href: "../install.sh", text: "Read the installer" }), " \xB7 Start afterward with ~/.local/bin/i6-share-hub --open.")
+    );
   };
-  function buildStepper() {
-    const root = required2("#stepper");
-    render(root, STEPS.map((step, i) => {
-      const num = h("div", { class: "step__num", attrs: { "aria-hidden": "true" } });
-      const head3 = h("div", {
-        class: "step__head",
-        attrs: { role: "button", tabindex: "0", id: `step-${String(i)}-head`, "aria-controls": `step-${String(i)}-body` },
-        onclick: () => {
-          setActive(i);
-        },
-        onkeydown: (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setActive(i);
-          }
-        }
-      }, step.title, h("span", { class: "caption", text: step.caption }));
-      const body = h("div", { class: "step__body", id: `step-${String(i)}-body`, attrs: { role: "region", "aria-labelledby": `step-${String(i)}-head` } });
-      const el = h("div", { class: i === STEPS.length - 1 ? "step step--last" : "step" }, num, head3, h("div", { class: "step__line" }), body);
-      Effect_exports.runSync(Ref_exports.update(stepsRef, (steps) => [...steps, { el, num, head: head3, body, rendered: false }]));
-      return el;
-    }), finishEl);
-    update3(false);
+  function update3() {
+    const target = required2("#stepper");
+    render(target, ...steps.map((step, index2) => {
+      const active = read().active === index2;
+      const done3 = read().done.includes(index2);
+      const header = button(`${done3 ? "\u2713 " : ""}${step.title}`, () => {
+        transition((current) => nextActive(current, index2));
+        update3();
+      }, "text");
+      header.id = `step-${String(index2)}-head`;
+      header.setAttribute("aria-expanded", String(active));
+      const body = h("div", { id: `step-${String(index2)}-body`, class: "step__body", hidden: !active });
+      if (active) render(body, ...step.body(), h("div", { class: "step__actions" }, button(index2 === steps.length - 1 ? "Finish" : "Done, next", () => {
+        transition((current) => ({ ...withDone(current, index2), active: index2 === steps.length - 1 ? -1 : index2 + 1 }));
+        update3();
+      }, "contained")));
+      return h("section", { class: `step${active ? " step--active" : ""}${done3 ? " step--done" : ""}` }, header, h("p", { class: "caption muted", text: step.caption }), body);
+    }), read().done.length === steps.length ? h("p", { class: "setup-finish", text: "Ready to share. Start the hub whenever you want to receive files." }) : null);
   }
-  const finishEl = h(
-    "div",
-    { class: "setup-finish hidden" },
-    banner("info", "check_circle", h(
-      "div",
-      null,
-      h("div", { class: "subtitle-2", text: "All set!" }),
-      p("Share photos and files from your phone to i6-share, and they appear in the hub's folder on this PC.")
-    ))
-  );
-  function renderBody(i) {
-    const s = stepEls()[i];
-    const step = STEPS[i];
-    if (s === void 0 || step === void 0) return;
-    const last = i === STEPS.length - 1;
-    render(
-      s.body,
-      step.body(),
-      h(
-        "div",
-        { class: "step__actions" },
-        button(last ? "Finish" : "Done, next", () => {
-          markDone(i);
-          setActive(last ? -1 : i + 1);
-        }, "contained"),
-        i > 0 && button("Back", () => {
-          setActive(i - 1);
-        }, "text")
-      )
-    );
-    Effect_exports.runSync(Ref_exports.update(stepsRef, (steps) => steps.map((item, index2) => index2 === i ? { ...item, rendered: true } : item)));
-  }
-  function setActive(i) {
-    Effect_exports.runSync(Ref_exports.update(stateRef, (state) => nextActive(state, i)));
-    saveState();
-    update3(true);
-  }
-  function markDone(i) {
-    Effect_exports.runSync(Ref_exports.update(stateRef, (state) => withDone(state, i)));
-    saveState();
-    update3(false);
-  }
-  function update3(scroll) {
-    stepEls().forEach((s, i) => {
-      const active = i === getState().active;
-      const done3 = getState().done.includes(i);
-      s.el.classList.toggle("step--active", active);
-      s.el.classList.toggle("step--done", done3 && !active);
-      s.head.setAttribute("aria-expanded", String(active));
-      render(s.num, done3 && !active ? icon("check") : String(i + 1));
-      if (active && !s.rendered) renderBody(i);
-    });
-    finishEl.classList.toggle("hidden", getState().done.length < STEPS.length || getState().active !== -1);
-    if (scroll && getState().active >= 0) {
-      const head3 = stepEls()[getState().active]?.head;
-      if (head3 === void 0) return;
-      requestAnimationFrame(() => {
-        const r = head3.getBoundingClientRect();
-        if (r.top < 64 || r.top > innerHeight * 0.6) {
-          head3.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-        }
-      });
-    }
-  }
-  async function init() {
-    Effect_exports.runSync(Ref_exports.set(browserRef, await Effect_exports.runPromise(detectBrowser(navigator))));
-    if (getBrowser().os === "Android" || getBrowser().os === "iOS") {
-      render(required2("#notice"), banner(
-        "warning",
-        "phone",
-        p("This guide is for your Linux computer. On this phone, ", h("a", { href: "../", text: "open the i6-share app" }), " instead.")
-      ));
-    }
-    if (getState().active >= STEPS.length) Effect_exports.runSync(Ref_exports.update(stateRef, (state) => ({ ...state, active: 0 })));
-    buildStepper();
+  const init = () => {
+    if (read().active < -1 || read().active >= steps.length) transition(() => initialState);
+    renderQuickInstall();
+    update3();
     required2("#reset").addEventListener("click", () => {
-      Effect_exports.runSync(Ref_exports.set(stateRef, emptyState));
-      saveState();
-      Effect_exports.runSync(Ref_exports.update(stepsRef, (steps) => steps.map((step) => ({ ...step, rendered: false }))));
-      update3(true);
-    });
-  }
-  function renderQuickInstall() {
-    const el = $("#quick-install-body");
-    if (!el) return;
-    const cmd = `curl -fsSL ${new URL("../install.sh", location.href).href} | bash`;
-    render(
-      el,
-      p("Open a terminal on the Linux PC (in your desktop session, as your normal user) and run:"),
-      codeBlock(cmd),
-      p(
-        "It asks for your password for ",
-        h("code", { text: "sudo" }),
-        " (installing Chrome, firewall) and nothing else. ",
-        "If Chrome is open it is closed for the install and started again afterwards; at the end the hub window opens. ",
-        "On a brand-new Chrome profile, answer Chrome\u2019s welcome dialog when it appears. Then continue with step 6 below."
-      ),
-      p(strong("To update the hub, run the same command again"), " \u2013 your pairings and settings are kept."),
-      p("Nothing starts at login: when you want to receive files, open ", strong("i6-share Hub"), " from your app menu; it only listens while its window is open."),
-      p(
-        h("a", { href: "../install.sh", target: "_blank", rel: "noopener", text: "Read the script first" }),
-        " \xB7 options: ",
-        h("code", { text: "--no-firewall  --yes" }),
-        " (use ",
-        h("code", { text: "| bash -s -- --no-firewall" }),
-        "; ",
-        h("code", { text: "--yes" }),
-        " skips Chrome\u2019s welcome dialog)"
-      )
-    );
-  }
-  return { init, renderQuickInstall, getState, getBrowser, setActive, markDone, renderBody, update: update3, loadVersion, testConnection };
+      transition(() => initialState);
+      update3();
+    }, { signal: lifetime.signal });
+  };
+  return { init, update: update3, loadVersion, testConnection, renderQuickInstall, getState: read, dispose: () => {
+    lifetime.abort();
+  } };
 };
-var startSetup = () => Effect_exports.gen(function* () {
-  const setup = yield* Effect_exports.sync(createSetup);
-  yield* Effect_exports.sync(() => {
-    setup.renderQuickInstall();
-  });
-  yield* attempt2(() => setup.init());
-});
-var initializeSetup = () => Effect_exports.runPromise(startSetup());
+var initializeSetup = () => Effect_exports.runPromise(Effect_exports.sync(() => {
+  createSetup().init();
+}));
 void initializeSetup().catch(console.error);
 export {
   createSetup,
-  detectBrowser,
   initializeSetup,
   loadState,
   nextActive,
-  normalizeOs,
-  startSetup,
   withDone
 };
 //# sourceMappingURL=setup.js.map

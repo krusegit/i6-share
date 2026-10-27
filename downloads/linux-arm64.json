@@ -1,0 +1,9 @@
+{
+  "version": "1.1.0",
+  "rid": "linux-arm64",
+  "file": "i6-share-hub-linux-arm64.tar.gz",
+  "size": 5279212,
+  "sha256": "69e0b58f9d7e110a2e16011dfbab81431c9708d8459ca5ceba0fb614f21417bf",
+  "commit": "702c376",
+  "builtAt": "2026-10-27T19:11:05.230Z"
+}

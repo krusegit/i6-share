@@ -30,8 +30,8 @@
       <div class="card__body setup-intro">
         <p>
           Your phone sends files straight to a small app on this computer, the
-          <strong>i6-share Hub</strong>. It runs in Google Chrome as an
-          <em>Isolated Web App</em>, the only kind of web app that may open a network port.
+          <strong>i6-share Hub</strong>. It is a self-contained native application with a local browser dashboard.
+          No desktop Chrome or .NET runtime installation is needed.
           Use the one-line installer below, or follow the steps by hand. Your progress is saved, so you can close this page and come back.
         </p>
       </div>
@@ -39,8 +39,8 @@
 
     <section class="card" id="quick-install">
       <div class="card__header">
-        <h2 class="card__title">Quick install (Debian 13)</h2>
-        <p class="card__subtitle">One command does steps 1–5 (Google Chrome, flags, the hub, the firewall) and opens the hub. Run it again to update.</p>
+        <h2 class="card__title">Quick install (Linux)</h2>
+        <p class="card__subtitle">Install into your user account, then launch the hub whenever you need it. Run the installer again to update.</p>
       </div>
       <div class="card__body" id="quick-install-body"></div>
     </section>
@@ -67,13 +67,13 @@
             or allow LAN access in the VPN app.</li>
           <li><strong>The PC got a new IP address?</strong> Nothing to do. The phone searches the
             local network for its paired hub and finds it again.</li>
-          <li><strong>The phone says it can't reach the PC.</strong> Make sure the hub window is open,
-            the firewall allows port 47616 (step 5), and Chrome on the phone may access local network
+          <li><strong>The phone says it can't reach the PC.</strong> Make sure a local hub dashboard tab is open,
+            the firewall allows port 47616, and Chrome on the phone may access local network
             devices (site settings → Local network access → Allow).</li>
           <li><strong>"Pairing lost".</strong> The PC forgot the phone, for example after the hub was
             reinstalled. Open the hub and scan its QR code again.</li>
-          <li><strong>Installing fails or the menu is missing.</strong> Check that both flags in
-            step 2 are set to <em>Enabled</em> and that Chrome was relaunched.</li>
+          <li><strong>Installing fails.</strong> Use the archive matching your Linux CPU architecture.
+            The installer requires curl and Python 3; it reports missing tools without changing system packages.</li>
         </ul>
       </div>
     </section>
