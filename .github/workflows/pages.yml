@@ -1,7 +1,7 @@
 name: Publish to gh-pages
 
 # On every push to dev (or manual run):
-#   * copies public/ to the root of the gh-pages branch and stamps build-info.js;
+#   * compiles TypeScript and copies dist/public/ to the root of the gh-pages branch and stamps build-info.js;
 #   * builds + signs the hub IWA bundle into hub/ – but only when the version in
 #     hub/manifest.webmanifest differs from the one already published on gh-pages.
 #     Otherwise the published hub/ is carried over byte-for-byte, so Chrome never
@@ -41,20 +41,31 @@ jobs:
           ref: gh-pages
           path: site
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate and build TypeScript applications
+        working-directory: src
+        run: npm run check
+
       # Runs before anything touches site/, so a failure leaves gh-pages untouched.
       - name: Decide whether to rebuild the hub
         id: hub
         run: |
           set -euo pipefail
-          json_field() { # file field -> value or empty
-            node -e 'const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]];
-                     process.stdout.write(typeof v === "string" ? v : "")' "$1" "$2"
+          json_field() { # file field -> scalar value or empty
+            src/node_modules/.bin/tsx src/tools/cli.ts release:field "$1" "$2"
           }
-          vercmp() { # prints -1, 0 or 1 (numeric, "1.0" == "1.0.0", like Chrome's base::Version)
-            node -e 'const [a, b] = process.argv.slice(1).map((s) => s.split(".").map(Number));
-                     let r = 0;
-                     for (let i = 0; i < Math.max(a.length, b.length) && !r; i++) r = Math.sign((a[i] || 0) - (b[i] || 0));
-                     process.stdout.write(String(r))' "$1" "$2"
+          vercmp() { # prints -1, 0 or 1; "1.0" equals "1.0.0"
+            src/node_modules/.bin/tsx src/tools/cli.ts release:compare "$1" "$2"
           }
 
           new="$(json_field src/hub/manifest.webmanifest version)"
@@ -101,18 +112,6 @@ jobs:
           fi
           echo "Signing key secret is present."
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: ${{ steps.hub.outputs.build == 'true' && 'npm' || '' }}
-          cache-dependency-path: src/package-lock.json
-
-      - name: Install build dependencies
-        if: steps.hub.outputs.build == 'true'
-        working-directory: src
-        run: npm ci --no-audit --no-fund
-
       - name: Build and sign hub bundle
         if: steps.hub.outputs.build == 'true'
         working-directory: src
@@ -132,7 +131,7 @@ jobs:
           I6_SIGNING_KEY="$keyfile" I6_OUT_DIR="$out" npm run --silent build:hub
           rm -f "$keyfile"
 
-          field() { node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]] ?? ""))' "$out/version.json" "$1"; }
+          field() { node_modules/.bin/tsx tools/cli.ts release:field "$out/version.json" "$1"; }
           id="$(field webBundleId)"
           if [ "$id" != "$EXPECTED_WEB_BUNDLE_ID" ]; then
             echo "::error::Built hub has Web Bundle ID $id, expected $EXPECTED_WEB_BUNDLE_ID. I6_HUB_SIGNING_KEY is not the hub's signing key – publishing would create a different app. Nothing was published."
@@ -171,17 +170,11 @@ jobs:
             cp -a site/hub "$hub"
           fi
           find site -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -a src/public/. site/
+          cp -a src/dist/public/. site/
           rm -rf site/hub # never publish a stray local build from public/hub
           cp -a "$hub" site/hub
           touch site/.nojekyll
           ls -l site/hub
-
-      - name: Stamp build info (version badge)
-        run: |
-          version="$(sed -n "s/^export const APP_VERSION = '\(.*\)';/\1/p" src/public/client.js)"
-          node src/tools/build-info.mjs "$version" > site/build-info.js
-          cat site/build-info.js
 
       - name: Commit and push
         working-directory: site

@@ -5,8 +5,8 @@ Send photos and files from your **Android phone** to your **Linux PC** (and back
 and from then on **Share → i6-share** in any app saves the files straight into a folder on your
 PC, with no prompts.
 
-No servers, no accounts, no cloud. Nothing leaves your network. Plain vanilla JavaScript with no
-runtime dependencies.
+No servers, no accounts, no cloud. Nothing leaves your network. The application is written in strict TypeScript with Effect. Browser dependencies are bundled
+locally, so the installed apps need no CDN or remote runtime.
 
 * Phone app: <https://krusegit.github.io/i6-share/>
 * Linux setup guide: <https://krusegit.github.io/i6-share/setup/>
@@ -181,15 +181,19 @@ queued files automatically.
 
 ## Development
 
-Requirements: Node.js ≥ 22.13 (for the build tools only; browser code has no dependencies).
+Requirements: Node.js 24 (the version used by CI) and npm. TypeScript and Effect are compiled
+into browser ES modules with esbuild; Node is only needed for development and builds.
 
 ```sh
-npm install          # wbn + wbn-sign (dev dependencies, used only by the hub build)
-npm run dev          # serves public/ on http://localhost:8080 (PORT=…, HOST=0.0.0.0 for LAN)
-npm run dev:hub      # serves the hub on http://localhost:5193 for the IWA Dev Mode Proxy
-npm run build:hub    # local test build: signs public/hub/i6-share-hub.swbn (git-ignored; CI publishes)
-npm run build:icons  # re-renders public/icons/*.png from the SVG sources (needs rsvg-convert)
-npm test             # end-to-end tests
+npm ci               # install the locked runtime and development dependencies
+npm run dev          # build + serve the phone app on http://localhost:8080
+npm run dev:hub      # build + serve the IWA Dev Mode Proxy on http://localhost:5193
+npm run build        # compile browser apps into dist/public and dist/hub
+npm run build:hub    # sign dist/public/hub/i6-share-hub.swbn (local test build)
+npm run build:icons  # re-render PNG icons from SVG sources (requires rsvg-convert)
+npm test             # unit, integration, browser-adapter, and end-to-end tests
+npm run test:e2e     # real TCP transfers with dropped connections and a hub restart
+npm run check        # strict types, ESLint, 100% type/test coverage, build, and E2E
 ```
 
 * **Phone app on a real phone:** service workers and the share target need a secure context. Use
@@ -198,17 +202,31 @@ npm test             # end-to-end tests
 * **Hub with live reload:** with the flags enabled, run `npm run dev:hub`, then
   `chrome://iwa-dev` → **Install** → **Dev Mode Proxy** → `http://localhost:5193` (older Chrome:
   `chrome://web-app-internals` → *Install IWA via Dev Mode Proxy*). Edit files in `hub/` or
-  `public/lib/` and reload the app window. The dev server serves the same files as the bundle
+  `public/lib/` and reload the app window; requests rebuild the compiled assets. The dev server serves the same files as the bundle
   (`hub/` at the root plus `/lib/`, `/style.css`, `/icons/`, and the manifest at
   `/.well-known/manifest.webmanifest`) with the COOP/COEP/CORP headers IWAs need.
 * **Local test build:** `npm run build:hub` signs with `~/.config/i6-share/hub-signing-key.pem`
-  (or `I6_SIGNING_KEY=/path/key.pem`; output dir `I6_OUT_DIR`, default `public/hub/`). The output
+  (or `I6_SIGNING_KEY=/path/key.pem`; output dir `I6_OUT_DIR`, default `dist/public/hub/`). The output
   is git-ignored and is **not** what users get – releases are built and signed by CI (below).
   If the key file doesn't exist, the build creates a *new* Ed25519 key there (= a different app).
 
-Layout: `public/` is the Pages site (phone PWA, `setup/` wizard, shared `lib/`, `style.css`,
-`icons/`; `hub/` is added by CI), `hub/` holds the hub IWA source, and `tools/` holds Node build
-and dev scripts. See [docs/PROTOCOL.md](docs/PROTOCOL.md).
+Layout: `public/` holds the phone PWA, setup wizard, shared TypeScript modules, and static
+assets. `hub/` holds the hub IWA source; `tools/` holds TypeScript build and development tools.
+The browser build writes `dist/public/` and `dist/hub/`; only compiled assets are published.
+See [docs/PROTOCOL.md](docs/PROTOCOL.md).
+
+Application services are factory functions with explicit dependencies. Pure protocol and data
+transformations are separate from Effect programs for cryptography, storage, network operations,
+and lifecycle work. Browser and Node adapters expose Promise APIs where the platform requires
+them. Runtime validation treats persisted data and network messages as unknown until decoded.
+
+`tsconfig.json` enables strict checking, checked indexed access, exact optional properties,
+unused-code checks, and declaration checking. ESLint applies the strict type-aware rules and
+rejects `any`, type assertions, TypeScript suppression comments, classes, and `this`.
+`type-coverage --strict` requires 100% typed identifiers. Vitest requires 100% statements,
+branches, functions, and lines per production TypeScript file, including browser adapters and
+build tools. Coverage includes files that tests do not import; the only exclusions are type
+declarations. Pull requests and deployment run the same checks.
 
 ### Releasing the hub
 
@@ -250,14 +268,14 @@ Never commit it (`*.pem` is git-ignored).
 ## GitHub Pages
 
 Source code lives on `dev`. Publishing is just a push to `dev` (or a manual run): the workflow in
-`.github/workflows/pages.yml` copies `public/` to the root of the `gh-pages` branch, stamps
-`build-info.js`, and adds `hub/` – rebuilt and signed when the hub version changed, otherwise
+`.github/workflows/pages.yml` validates the source, compiles `dist/public/`, copies it to the
+root of the `gh-pages` branch, writes build metadata, and adds `hub/` – rebuilt and signed when the hub version changed, otherwise
 carried over from the previous gh-pages commit (see [Releasing the hub](#releasing-the-hub)).
 
 1. Repository **Settings → Pages → Build and deployment → Source: Deploy from a branch →
    `gh-pages` / `(root)`**.
 2. The site will be at `https://<user>.github.io/<repo>/`.
-3. **Forks:** change `APP_URL` in [`public/lib/proto.js`](public/lib/proto.js) to your Pages
+3. **Forks:** change `APP_URL` in [`public/lib/proto.ts`](public/lib/proto.ts) to your Pages
    URL (the hub's QR codes link to it), set your own `I6_HUB_SIGNING_KEY` secret and
    `EXPECTED_WEB_BUNDLE_ID` in the workflow (a fresh gh-pages branch builds the hub on first push).
 

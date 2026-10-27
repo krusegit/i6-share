@@ -25,24 +25,30 @@ local network only, with no internet server of any kind.
 
 | Path | What | Notes |
 |---|---|---|
-| `public/` | GitHub Pages site root | everything here is deployed |
-| `public/index.html`, `public/app.js`, `public/sw.js`, `public/manifest.webmanifest` | Phone/desktop client PWA | share target, pairing, sending, receiving |
+| `public/` | Phone app TypeScript source and static assets | compiled to `dist/public/` for deployment |
+| `public/index.html`, `public/app.ts`, `public/sw.ts`, `public/manifest.webmanifest` | Phone/desktop client PWA | share target, pairing, sending, receiving |
 | `public/style.css` | Material Design 2 theme | shared by all three UIs |
-| `public/lib/proto.js` | protocol + crypto | **shared contract – do not fork** |
-| `public/lib/dom.js` | DOM helpers, icons, MD2 components | Trusted-Types safe (no innerHTML) |
-| `public/lib/store.js` | IndexedDB wrapper | stores: `kv`, `hubs`, `devices`, `queue` |
+| `public/lib/proto.ts` | protocol + crypto | **shared contract – do not fork** |
+| `public/lib/dom.ts` | DOM helpers, icons, MD2 components | Trusted-Types safe (no innerHTML) |
+| `public/lib/store.ts` | IndexedDB wrapper | stores: `kv`, `hubs`, `devices`, `queue` |
 | `public/setup/` | Linux onboarding wizard | install the hub IWA step by step |
-| `hub/i6-share-hub.swbn` (on gh-pages) | built, signed hub bundle + `version.json` + `update.json` | built and signed by CI (`.github/workflows/pages.yml`) when `hub/manifest.webmanifest` version changes; `npm run build:hub` writes a local test build to the git-ignored `public/hub/` |
+| `hub/i6-share-hub.swbn` (on gh-pages) | built, signed hub bundle + `version.json` + `update.json` | built and signed by CI (`.github/workflows/pages.yml`) when `hub/manifest.webmanifest` version changes; `npm run build:hub` writes a local test build to the git-ignored `dist/public/hub/` |
 | `public/icons/` | PNG/SVG icons | used by PWA, hub and wizard |
 | `hub/` | Hub IWA source | bundled together with `public/lib/*`, `public/style.css`, `public/icons/*` |
-| `tools/` | build / dev scripts (Node) | the only place npm dependencies are allowed |
+| `tools/` | TypeScript/Effect build and dev tools (Node) | esbuild bundles browser dependencies; wbn/wbn-sign create signed IWAs |
 
 Inside the hub bundle, paths are: `/index.html`, `/hub.js`, `/…other hub files`, `/lib/*.js`,
-`/style.css`, `/icons/*`. So hub code imports shared code as `./lib/proto.js`.
+`/style.css`, `/icons/*`. Hub TypeScript imports shared modules from `../public/lib/` in
+the source tree; esbuild resolves and bundles those imports. Build metadata remains a relative
+`./build-info.js` import so the signed manifest version is shown correctly.
 
-Rules for all browser code: vanilla JS ES modules, no frameworks, no CDNs, no external requests,
-no `innerHTML`/`eval`/inline scripts or inline event handlers (IWA CSP + Trusted Types). Use
-`h()` from `lib/dom.js` to build DOM. Relative URLs only (Pages serves under `/i6-share/`).
+Rules for application code: strict TypeScript, functions instead of classes, validated unknown
+values at external boundaries, and Effect programs for I/O and resource lifecycle. Pure protocol
+transformations retain the same v1 wire format. Dependencies are bundled locally; no CDNs or
+remote code. No `innerHTML`/`eval`/inline scripts or inline event handlers (IWA CSP + Trusted
+Types). Use `h()` from `public/lib/dom.ts` to build DOM. Relative URLs only (Pages serves under
+`/i6-share/`). `npm run check` enforces strict typing, lint rules, and complete per-file test
+coverage before publishing.
 
 ## Identity & pairing
 
@@ -50,7 +56,7 @@ no `innerHTML`/`eval`/inline scripts or inline event handlers (IWA CSP + Trusted
   name, stored in `kv`.
 * **Hub** has a persistent random `hubId` (16 hex chars) and a name (default "Linux PC").
 * Pairing is done once by scanning a QR code shown by the hub. The QR encodes
-  `APP_URL#pair=<payload>` (`encodePairPayload` in `proto.js`): hubId, a **one-time 16-byte
+  `APP_URL#pair=<payload>` (`encodePairPayload` in `public/lib/proto.ts`): hubId, a **one-time 16-byte
   token**, port, the hub's private LAN IPv4 and unique-local (fc00::/7) IPv6 addresses (no link-local, no global IPv6 — Chrome treats those as public, so mixed-content rules block them), and its name.
   Scanning it with any camera app opens the PWA, which completes pairing. The PWA also has an
   in-app scanner (`BarcodeDetector`) and a "paste pairing code" fallback.

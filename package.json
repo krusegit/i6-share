@@ -5,17 +5,40 @@
   "description": "Local-network file sharing between an Android phone (PWA) and a Linux PC (Isolated Web App hub).",
   "type": "module",
   "scripts": {
-    "build:hub": "node tools/build-hub.mjs",
-    "build:icons": "node tools/build-icons.mjs",
-    "dev": "node tools/dev-server.mjs",
-    "dev:hub": "node tools/dev-hub.mjs",
-    "test": "node tools/test-e2e.mjs"
+    "build": "tsx tools/cli.ts build",
+    "build:hub": "tsx tools/cli.ts build:hub",
+    "build:icons": "tsx tools/cli.ts build:icons",
+    "dev": "tsx tools/cli.ts dev",
+    "dev:hub": "tsx tools/cli.ts dev:hub",
+    "typecheck": "tsc --noEmit",
+    "type-coverage": "type-coverage --at-least 100 --strict --detail",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run tests/e2e.test.ts",
+    "check": "npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage && npm run build && npm run test:e2e"
   },
   "engines": {
     "node": ">=22.13"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.13.0",
+    "fake-indexeddb": "^6.2.6",
+    "happy-dom": "^21.0.4",
+    "jiti": "^2.7.0",
+    "tsx": "^4.23.15",
+    "type-coverage": "^2.30.4",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^5.0.5",
     "wbn": "^0.0.9",
     "wbn-sign": "^0.3.3"
+  },
+  "dependencies": {
+    "effect": "^4.0.6"
   }
 }

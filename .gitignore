@@ -1,5 +1,7 @@
 # dependencies
 node_modules/
+dist/
+coverage/
 
 # secrets – the hub signing key must never be committed
 *.pem
