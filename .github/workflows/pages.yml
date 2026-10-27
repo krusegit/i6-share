@@ -1,7 +1,15 @@
 name: Publish to gh-pages
 
-# Copies public/ from dev to the root of the gh-pages branch.
+# On every push to dev (or manual run):
+#   * copies public/ to the root of the gh-pages branch and stamps build-info.js;
+#   * builds + signs the hub IWA bundle into hub/ – but only when the version in
+#     hub/manifest.webmanifest differs from the one already published on gh-pages.
+#     Otherwise the published hub/ is carried over byte-for-byte, so Chrome never
+#     sees two different bundles with the same version.
 # GitHub Pages is set to "Deploy from a branch: gh-pages / (root)".
+#
+# Signing key: repository secret I6_HUB_SIGNING_KEY (Ed25519 PKCS8 PEM contents).
+# It IS the app identity; the build fails unless it yields EXPECTED_WEB_BUNDLE_ID.
 
 on:
   push:
@@ -15,26 +23,159 @@ concurrency:
   group: gh-pages
   cancel-in-progress: false
 
+env:
+  EXPECTED_WEB_BUNDLE_ID: co7xxoa6ugc4opuhmvki265in2w5vxbayrvah6sni4vnkrg6jhiaaaic
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout dev
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: src
 
       - name: Checkout gh-pages
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: gh-pages
           path: site
 
-      - name: Copy public/ to gh-pages
+      # Runs before anything touches site/, so a failure leaves gh-pages untouched.
+      - name: Decide whether to rebuild the hub
+        id: hub
         run: |
+          set -euo pipefail
+          json_field() { # file field -> value or empty
+            node -e 'const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]];
+                     process.stdout.write(typeof v === "string" ? v : "")' "$1" "$2"
+          }
+          vercmp() { # prints -1, 0 or 1 (numeric, "1.0" == "1.0.0", like Chrome's base::Version)
+            node -e 'const [a, b] = process.argv.slice(1).map((s) => s.split(".").map(Number));
+                     let r = 0;
+                     for (let i = 0; i < Math.max(a.length, b.length) && !r; i++) r = Math.sign((a[i] || 0) - (b[i] || 0));
+                     process.stdout.write(String(r))' "$1" "$2"
+          }
+
+          new="$(json_field src/hub/manifest.webmanifest version)"
+          if ! [[ "$new" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "::error::hub/manifest.webmanifest has no valid \"version\" (got \"$new\")."
+            exit 1
+          fi
+          published=""
+          if [ -f site/hub/version.json ] && [ -f site/hub/i6-share-hub.swbn ]; then
+            published="$(json_field site/hub/version.json version)"
+          fi
+          echo "Hub version in manifest:  $new"
+          echo "Hub version on gh-pages:  ${published:-<none>}"
+
+          build=true
+          if [ -n "$published" ]; then
+            case "$(vercmp "$new" "$published")" in
+              0) build=false ;;
+              1) ;;
+              *) echo "::error::hub/manifest.webmanifest version $new is LOWER than the published hub $published. Chrome never downgrades an IWA; bump the version above $published."
+                 exit 1 ;;
+            esac
+          fi
+          if [ "$build" = true ]; then
+            echo "Hub will be rebuilt and signed ($new)."
+          else
+            echo "Hub version unchanged: carrying over the published hub/ unchanged."
+          fi
+          {
+            echo "build=$build"
+            echo "version=$new"
+            echo "published=$published"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check signing key secret
+        if: steps.hub.outputs.build == 'true'
+        env:
+          I6_HUB_SIGNING_KEY: ${{ secrets.I6_HUB_SIGNING_KEY }}
+          HUB_VERSION: ${{ steps.hub.outputs.version }}
+        run: |
+          if [ -z "${I6_HUB_SIGNING_KEY//[[:space:]]/}" ]; then
+            echo "::error::Hub version changed to $HUB_VERSION but the repository secret I6_HUB_SIGNING_KEY is missing or empty. Add it (Settings → Secrets and variables → Actions) with the PEM contents of the hub signing key; gh-pages was not changed."
+            exit 1
+          fi
+          echo "Signing key secret is present."
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: ${{ steps.hub.outputs.build == 'true' && 'npm' || '' }}
+          cache-dependency-path: src/package-lock.json
+
+      - name: Install build dependencies
+        if: steps.hub.outputs.build == 'true'
+        working-directory: src
+        run: npm ci --no-audit --no-fund
+
+      - name: Build and sign hub bundle
+        if: steps.hub.outputs.build == 'true'
+        working-directory: src
+        env:
+          I6_HUB_SIGNING_KEY: ${{ secrets.I6_HUB_SIGNING_KEY }}
+          HUB_VERSION: ${{ steps.hub.outputs.version }}
+        run: |
+          set -euo pipefail
+          umask 077
+          keyfile="$(mktemp "${RUNNER_TEMP:-/tmp}/hub-signing-key.XXXXXX")"
+          trap 'rm -f "$keyfile"' EXIT
+          printf '%s\n' "$I6_HUB_SIGNING_KEY" > "$keyfile"
+          unset I6_HUB_SIGNING_KEY
+
+          out="${RUNNER_TEMP:-/tmp}/hub-out"
+          rm -rf "$out"
+          I6_SIGNING_KEY="$keyfile" I6_OUT_DIR="$out" npm run --silent build:hub
+          rm -f "$keyfile"
+
+          field() { node -e 'process.stdout.write(String(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]] ?? ""))' "$out/version.json" "$1"; }
+          id="$(field webBundleId)"
+          if [ "$id" != "$EXPECTED_WEB_BUNDLE_ID" ]; then
+            echo "::error::Built hub has Web Bundle ID $id, expected $EXPECTED_WEB_BUNDLE_ID. I6_HUB_SIGNING_KEY is not the hub's signing key – publishing would create a different app. Nothing was published."
+            exit 1
+          fi
+          if [ "$(field version)" != "$HUB_VERSION" ]; then
+            echo "::error::Built hub version $(field version) != manifest version $HUB_VERSION."
+            exit 1
+          fi
+          sha="$(sha256sum "$out/i6-share-hub.swbn" | cut -d' ' -f1)"
+          if [ "$sha" != "$(field sha256)" ]; then
+            echo "::error::sha256 of i6-share-hub.swbn does not match version.json."
+            exit 1
+          fi
+          echo "Hub bundle OK:"
+          echo "  version        $(field version)"
+          echo "  commit         $(field commit) ($(field committedAt))"
+          echo "  Web Bundle ID  $id"
+          echo "  size           $(field size) bytes"
+          echo "  sha256         $sha"
+          echo "### Hub $(field version) built and signed (commit $(field commit), sha256 \`$sha\`)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f "${RUNNER_TEMP:-/tmp}"/hub-signing-key.*
+
+      - name: Copy public/ and hub to gh-pages
+        env:
+          BUILD_HUB: ${{ steps.hub.outputs.build }}
+        run: |
+          set -euo pipefail
+          hub="${RUNNER_TEMP:-/tmp}/hub-out"
+          if [ "$BUILD_HUB" != true ]; then
+            # Carry the published bundle over unchanged (read before site/ is wiped).
+            rm -rf "$hub"
+            cp -a site/hub "$hub"
+          fi
           find site -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -a src/public/. site/
+          rm -rf site/hub # never publish a stray local build from public/hub
+          cp -a "$hub" site/hub
           touch site/.nojekyll
+          ls -l site/hub
 
       - name: Stamp build info (version badge)
         run: |
@@ -44,6 +185,9 @@ jobs:
 
       - name: Commit and push
         working-directory: site
+        env:
+          BUILD_HUB: ${{ steps.hub.outputs.build }}
+          HUB_VERSION: ${{ steps.hub.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
@@ -52,5 +196,7 @@ jobs:
             echo "No changes to publish"
             exit 0
           fi
-          git commit -m "Publish ${GITHUB_SHA::7} from dev"
+          msg="Publish ${GITHUB_SHA::7} from dev"
+          if [ "$BUILD_HUB" = true ]; then msg="$msg (hub $HUB_VERSION)"; fi
+          git commit -m "$msg"
           git push origin gh-pages

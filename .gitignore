@@ -24,5 +24,6 @@ npm-debug.log*
 test-results/
 playwright-report/
 
-# NOTE: public/hub/*.swbn, version.json and update.json are tracked on purpose:
-# GitHub Pages serves the hub bundle from there.
+# hub build output – the signed bundle is built in CI (.github/workflows/pages.yml)
+# and published to gh-pages; `npm run build:hub` writes here only for local testing.
+public/hub/

@@ -61,20 +61,31 @@ Target platform: **Debian 13 (trixie)** with **Google Chrome**.
 curl -fsSL https://krusegit.github.io/i6-share/install.sh | bash
 ```
 
-[`install.sh`](public/install.sh) installs Google Chrome (Google's `.deb`, which also adds
-Google's apt repository), enables the two Isolated Web App flags in Chrome's `Local State`
-(exactly what `chrome://flags` does), downloads the hub bundle and checks its SHA-256,
-installs it into Chrome and opens TCP 47616 when nftables/iptables rules would block it
-(`/etc/nftables.conf` is backed up to `.i6bak` before it's edited). Chrome is closed first if
-it's running (it asks) and closed again after the install.
+[`install.sh`](public/install.sh) runs without questions: it installs Google Chrome (Google's
+`.deb`, which also adds Google's apt repository), enables the two Isolated Web App flags in
+Chrome's `Local State` (exactly what `chrome://flags` does), opens TCP 47616 when
+nftables/iptables rules would block it (`/etc/nftables.conf` is backed up to `.i6bak` before
+it's edited), downloads the hub bundle, checks its SHA-256 and installs it into Chrome. If
+Chrome is running it is closed for this and started again afterwards; at the end the hub
+window opens. On a brand-new Chrome profile answer Chrome's welcome dialog (or pass `--yes`
+to skip it).
+
+**To update, run the same command again.** Chrome can't update a file-installed IWA from the
+command line, so the script replaces Chrome's stored copy of the bundle
+(`~/.config/google-chrome/<profile>/iwa/<id>/main.swbn`, found by the hub's Web Bundle ID) with
+the new signed one while Chrome is closed; the old copy goes to
+`~/.local/share/i6-share/backup/` (last 3 kept). Pairings and settings are kept. Caveats:
+`chrome://web-app-internals` keeps showing the originally installed version (the badge in the
+hub's corner shows the real one), and changes to the app manifest (name, icons, permissions
+policy) only take effect after a fresh install.
 
 **Nothing starts automatically** – no login autostart, no background service. The hub only
 listens on port 47616 while you have its window open: start "i6-share Hub" from the app
-menu when you want to receive, close the window to stop. Options: `--yes --no-firewall`
-(`curl … | bash -s -- --yes`).
-Re-running it is safe. Chrome shows an "unsupported feature flag: IsolatedWebAppDevMode"
-bar, which is expected: developer mode is the only way to install IWAs outside managed
-ChromeOS today (policy installs on Linux are restricted to Google's allowlist).
+menu when you want to receive, close the window to stop. Options: `--no-firewall`, `--yes`
+(`curl … | bash -s -- --no-firewall`).
+Chrome shows an "unsupported feature flag: IsolatedWebAppDevMode" bar, which is expected:
+developer mode is the only way to install IWAs outside managed ChromeOS today (policy
+installs on Linux are restricted to Google's allowlist).
 
 Manual steps:
 
@@ -87,7 +98,7 @@ Manual steps:
    ```
 2. Enable `chrome://flags/#enable-isolated-web-apps` and
    `chrome://flags/#enable-isolated-web-app-dev-mode`, then relaunch.
-3. Install the hub from its **update manifest** (recommended – Chrome then keeps it updated and
+3. Install the hub from its **update manifest** (Chrome then checks for updates by itself and
    your pairings survive updates):
    `https://krusegit.github.io/i6-share/hub/update.json`
    * Chrome 120–153: `chrome://web-app-internals` → **Install IWA from Update Manifest** →
@@ -101,8 +112,9 @@ Manual steps:
    google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode \
      --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"
    ```
-   (file installs don't auto-update; installing a newer file over it fails with
-   "App is already installed").
+   (this is what `install.sh` does; Chrome doesn't update file installs by itself and
+   installing a newer file over it fails with "App is already installed" – re-run
+   `install.sh` to update instead).
 5. Firewall: a fresh Debian 13 has no rules (`sudo nft list ruleset` prints nothing) — then skip
    this. Otherwise allow TCP 47616:
    ```sh
@@ -114,6 +126,16 @@ Manual steps:
    `/etc/nftables.conf` and `sudo systemctl enable --now nftables`.
 6. Launch **i6-share Hub** from your app launcher (or `chrome://apps`) and pick a save folder.
    The hub only receives while its window is open (minimised is fine).
+
+## Updates
+
+The hub shows a banner when a newer version is published. To update, run the installer again:
+`curl -fsSL https://krusegit.github.io/i6-share/install.sh | bash` – it closes Chrome, installs the
+new version in place, keeps your pairings and settings, and reopens the hub. Hubs installed from
+the update link also update automatically within a few hours (applied once the hub window is
+closed); to force it use `chrome://iwa-dev` (Chrome 154+) or `chrome://web-app-internals`
+(Chrome 153 and older) → **Update** / **Perform update now**. The phone app updates itself on
+the next launch after a deploy.
 
 ## Pairing & auto-trust
 
@@ -129,7 +151,9 @@ queued files automatically.
 ## Security model
 
 * **LAN only.** The phone talks directly to the PC's private IP address. No relay, no STUN/TURN,
-  no telemetry. GitHub Pages only serves the static code.
+  no telemetry. GitHub Pages only serves the static code. The one other request: the hub fetches
+  `hub/version.json` from GitHub Pages at start and every 6 hours to show an "update available"
+  banner (no data is sent; when offline nothing happens).
 * **Encrypted and authenticated.** Every request and response body except the public
   `GET /i6/hello` (hub ID and name) is sealed with **AES-256-GCM** under a key derived (HKDF-SHA-256)
   from the per-device secret. The request's IV is bound into the response, so responses can't
@@ -163,7 +187,7 @@ Requirements: Node.js ≥ 22.13 (for the build tools only; browser code has no d
 npm install          # wbn + wbn-sign (dev dependencies, used only by the hub build)
 npm run dev          # serves public/ on http://localhost:8080 (PORT=…, HOST=0.0.0.0 for LAN)
 npm run dev:hub      # serves the hub on http://localhost:5193 for the IWA Dev Mode Proxy
-npm run build:hub    # builds and signs public/hub/i6-share-hub.swbn (+ version.json, update.json)
+npm run build:hub    # local test build: signs public/hub/i6-share-hub.swbn (git-ignored; CI publishes)
 npm run build:icons  # re-renders public/icons/*.png from the SVG sources (needs rsvg-convert)
 npm test             # end-to-end tests
 ```
@@ -177,29 +201,65 @@ npm test             # end-to-end tests
   `public/lib/` and reload the app window. The dev server serves the same files as the bundle
   (`hub/` at the root plus `/lib/`, `/style.css`, `/icons/`, and the manifest at
   `/.well-known/manifest.webmanifest`) with the COOP/COEP/CORP headers IWAs need.
-* **Building the bundle:** `npm run build:hub` signs with
-  `~/.config/i6-share/hub-signing-key.pem` (or `I6_SIGNING_KEY=/path/key.pem`). If the key
-  doesn't exist, the build creates a new Ed25519 key there.
-  > ⚠️ **Back up the signing key.** It defines the app's identity
-  > (`isolated-app://<Web Bundle ID>/`). A different key produces a *different app*: users would
-  > have to install it again and re-pair. Never commit it (`*.pem` is git-ignored).
-* The manifest `version` in `hub/manifest.webmanifest` is required. Bump it for every release.
-  Commit the rebuilt `public/hub/` files; Pages serves them.
+* **Local test build:** `npm run build:hub` signs with `~/.config/i6-share/hub-signing-key.pem`
+  (or `I6_SIGNING_KEY=/path/key.pem`; output dir `I6_OUT_DIR`, default `public/hub/`). The output
+  is git-ignored and is **not** what users get – releases are built and signed by CI (below).
+  If the key file doesn't exist, the build creates a *new* Ed25519 key there (= a different app).
 
 Layout: `public/` is the Pages site (phone PWA, `setup/` wizard, shared `lib/`, `style.css`,
-`icons/`, built `hub/` bundle), `hub/` holds the hub IWA source, and `tools/` holds Node build
+`icons/`; `hub/` is added by CI), `hub/` holds the hub IWA source, and `tools/` holds Node build
 and dev scripts. See [docs/PROTOCOL.md](docs/PROTOCOL.md).
+
+### Releasing the hub
+
+1. Bump `version` in [`hub/manifest.webmanifest`](hub/manifest.webmanifest) (dot-separated
+   numbers, e.g. `1.0.5`; it must be higher than the published one).
+2. Push to `dev`. The Pages workflow builds and signs the bundle with the repository secret
+   `I6_HUB_SIGNING_KEY`, checks that the Web Bundle ID is still
+   `co7xxoa6ugc4opuhmvki265in2w5vxbayrvah6sni4vnkrg6jhiaaaic`, and publishes `hub/i6-share-hub.swbn`,
+   `hub/version.json` and `hub/update.json` to gh-pages. The job log shows version, commit and SHA-256.
+3. Hubs installed from the update manifest (`…/hub/update.json`) are updated by Chrome
+   automatically (or at once via **Perform update now**); `.swbn` file installs must be updated by hand.
+
+The hub is only rebuilt when the manifest `version` differs from the published
+`hub/version.json`; otherwise the published `hub/` is carried over byte-for-byte, so unrelated
+pushes never change the bundle and Chrome never sees two bundles with the same version. The job
+fails – leaving gh-pages untouched – if the version went down, if the secret is missing, or if
+the key yields a different Web Bundle ID.
+
+### Signing key
+
+The Ed25519 key (unencrypted PKCS8 PEM) **is** the hub's identity (`isolated-app://<Web Bundle ID>/`).
+A different key produces a *different app*: users would have to install it again and re-pair.
+Never commit it (`*.pem` is git-ignored).
+
+* **Primary copy:** repository secret `I6_HUB_SIGNING_KEY` (Settings → Secrets and variables →
+  Actions) holding the PEM file contents. Secrets can't be read back, so keep the backup.
+* **Backup:** the maintainer's local copy `~/.config/i6-share/hub-signing-key.pem` (mode 600);
+  keep a further offline copy (e.g. password manager).
+* **Restore** (secret lost or deleted): `gh secret set I6_HUB_SIGNING_KEY < ~/.config/i6-share/hub-signing-key.pem`
+  (or paste the file contents in the web UI). Check it with a local build:
+  `npm run build:hub` must print the Web Bundle ID above.
+* **Rotate** only if the key is compromised – it creates a new app. Create a new key with
+  `I6_SIGNING_KEY=~/.config/i6-share/hub-signing-key-new.pem npm run build:hub` (generates the
+  file if it doesn't exist and prints the new Web Bundle ID), store it in the secret and as the
+  backup, update `EXPECTED_WEB_BUNDLE_ID` in `.github/workflows/pages.yml` and the ID in this
+  README, bump the hub version and push. Every user must install the new hub and re-pair their
+  phones; the old app gets no further updates.
 
 ## GitHub Pages
 
-Source code lives on `dev`. The workflow in `.github/workflows/pages.yml` copies `public/` to the
-root of the `gh-pages` branch on every push to `dev` (or when run manually).
+Source code lives on `dev`. Publishing is just a push to `dev` (or a manual run): the workflow in
+`.github/workflows/pages.yml` copies `public/` to the root of the `gh-pages` branch, stamps
+`build-info.js`, and adds `hub/` – rebuilt and signed when the hub version changed, otherwise
+carried over from the previous gh-pages commit (see [Releasing the hub](#releasing-the-hub)).
 
 1. Repository **Settings → Pages → Build and deployment → Source: Deploy from a branch →
    `gh-pages` / `(root)`**.
 2. The site will be at `https://<user>.github.io/<repo>/`.
 3. **Forks:** change `APP_URL` in [`public/lib/proto.js`](public/lib/proto.js) to your Pages
-   URL (the hub's QR codes link to it), and build the hub with your own signing key.
+   URL (the hub's QR codes link to it), set your own `I6_HUB_SIGNING_KEY` secret and
+   `EXPECTED_WEB_BUNDLE_ID` in the workflow (a fresh gh-pages branch builds the hub on first push).
 
 ## Limitations
 

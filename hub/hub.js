@@ -10,10 +10,14 @@ import { startServer } from './http.js';
 import { HubApi, ONLINE_MS } from './api.js';
 import { AddressBook } from './net.js';
 import { FolderSink } from './sink.js';
+import { checkForUpdate, compareVersions } from './update-check.js';
 
 const SETUP_URL = APP_URL + 'setup/';
+const INSTALL_CMD = `curl -fsSL ${APP_URL}install.sh | bash`;
 const RECEIVED_KEY = 'received';
 const RECEIVED_MAX = 100;
+const UPDATE_CHECK_MS = 6 * 60 * 60 * 1000;
+const DISMISSED_UPDATE_KEY = 'dismissedUpdate';
 const app = document.getElementById('app');
 
 // The QR module is written separately; load it lazily so a problem there never blocks the hub.
@@ -202,12 +206,78 @@ function mountUi({ api, server, addrs, sink, kv, received }) {
       items.push(banner('error', `Couldn’t save “${sinkError.name}”: ${sinkError.message}. The phone will retry.`,
         button('Dismiss', () => { sinkError = null; renderBanners(); })));
     }
+    if (update.latest && !(update.dismissed && compareVersions(update.latest, update.dismissed) <= 0)) {
+      items.push(banner('update', [
+        h('strong', { text: `i6-share Hub ${update.latest} is available` }),
+        ` (you have ${update.current}).`,
+      ], h('div', { class: 'hub-banner__actions' },
+        button('Dismiss', () => dismissUpdate()),
+        button('How to update', () => howToUpdate(), 'outlined'))));
+    }
     render(banners, items);
   }
+  const BANNER_ICONS = { error: 'error', warning: 'warning', update: 'info' };
   const banner = (kind, text, action) => h('div', { class: `banner banner--${kind}` },
-    icon(kind === 'error' ? 'error' : 'warning'),
+    icon(BANNER_ICONS[kind] || 'info'),
     h('div', { class: 'grow' }, h('p', {}, text)),
     action);
+
+  // ---------------------------------------------------------------- update check
+  // Offline is normal on a LAN-only setup: failures are silent and never block anything.
+  const update = { current: null, latest: null, dismissed: null };
+  let checking = false;
+  async function runUpdateCheck() {
+    if (checking) return;
+    checking = true;
+    try {
+      update.current ??= (await import('./build-info.js').catch(() => ({}))).BUILD?.version || null;
+      if (!update.current) return;
+      const result = await checkForUpdate({ current: update.current });
+      console.debug('[i6] update check', result ? `latest ${result.latest}, running ${update.current}` : 'unavailable');
+      if (!result) return;
+      update.dismissed = (await kv.get(DISMISSED_UPDATE_KEY).catch(() => null)) || null;
+      const latest = result.available ? result.latest : null;
+      if (latest !== update.latest) { update.latest = latest; renderBanners(); }
+    } finally {
+      checking = false;
+    }
+  }
+  async function dismissUpdate() {
+    update.dismissed = update.latest;
+    renderBanners();
+    await kv.put(DISMISSED_UPDATE_KEY, update.latest).catch(() => {});
+  }
+
+  async function howToUpdate() {
+    const pages = [
+      { url: 'chrome://iwa-dev', note: 'Chrome 154 and newer', button: 'Update' },
+      { url: 'chrome://web-app-internals', note: 'Chrome 153 and older', button: 'Perform update now' },
+    ];
+    const major = chromeMajor();
+    if (major && major < 154) pages.reverse();
+    const [page, other] = pages;
+    await dialog({
+      title: `Update to i6-share Hub ${update.latest}`,
+      content: [
+        h('div', { class: 'hub-setting hub-update-cmd' },
+          h('p', { class: 'subtitle-2', text: 'Run the installer again in a terminal:' }),
+          codeBlock(INSTALL_CMD),
+          h('p', { text: 'It closes Chrome, installs the new version, keeps your pairings and settings, and reopens the hub.' })),
+        h('details', { class: 'hub-details' },
+          h('summary', { text: 'Installed from the update link instead?' }),
+          h('div', { class: 'hub-details__body' },
+            h('p', { text: 'Chrome updates the hub automatically within a few hours. The update is applied once the hub window is closed. To update right away:' }),
+            h('ol', { class: 'hub-steps' },
+              h('li', {}, `Copy this address (${page.note}):`, codeBlock(page.url),
+                h('span', { class: 'caption muted', text: `${other.note}: ${other.url}` })),
+              h('li', { text: 'Close this hub window.' }),
+              h('li', {}, 'Paste the address into Chrome’s address bar, find ', h('strong', { text: 'i6-share Hub' }),
+                ' and click ', h('strong', { text: page.button }), '.'),
+              h('li', { text: 'Reopen the hub.' })))),
+      ],
+      actions: [{ label: 'Close', value: true }],
+    });
+  }
 
   server.addEventListener('state', () => { updateStatus(); renderBanners(); });
   sink.addEventListener('change', () => renderBanners());
@@ -561,12 +631,22 @@ function mountUi({ api, server, addrs, sink, kv, received }) {
   setInterval(() => { for (const id of rows.keys()) updateRow(id); }, 10_000);
   setInterval(renderReceived, 60_000);
   window.addEventListener('focus', () => { sink.check(); });
+  setInterval(runUpdateCheck, UPDATE_CHECK_MS);
+  window.addEventListener('online', () => runUpdateCheck());
 
   updateStatus();
   renderBanners();
   renderPair();
   renderPhones();
   renderReceived();
+  runUpdateCheck();
+}
+
+/** Chrome's major version (null if unknown). */
+function chromeMajor() {
+  const brand = navigator.userAgentData?.brands?.find((b) => /^(Google Chrome|Chromium)$/.test(b.brand));
+  const v = Number.parseInt(brand?.version ?? navigator.userAgent.match(/Chrom(?:e|ium)\/(\d+)/)?.[1], 10);
+  return Number.isFinite(v) ? v : null;
 }
 
 // ------------------------------------------------------------------ boot

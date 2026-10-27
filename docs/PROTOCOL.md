@@ -32,7 +32,7 @@ local network only, with no internet server of any kind.
 | `public/lib/dom.js` | DOM helpers, icons, MD2 components | Trusted-Types safe (no innerHTML) |
 | `public/lib/store.js` | IndexedDB wrapper | stores: `kv`, `hubs`, `devices`, `queue` |
 | `public/setup/` | Linux onboarding wizard | install the hub IWA step by step |
-| `public/hub/i6-share-hub.swbn` | built, signed hub bundle | produced by `npm run build:hub` |
+| `hub/i6-share-hub.swbn` (on gh-pages) | built, signed hub bundle + `version.json` + `update.json` | built and signed by CI (`.github/workflows/pages.yml`) when `hub/manifest.webmanifest` version changes; `npm run build:hub` writes a local test build to the git-ignored `public/hub/` |
 | `public/icons/` | PNG/SVG icons | used by PWA, hub and wizard |
 | `hub/` | Hub IWA source | bundled together with `public/lib/*`, `public/style.css`, `public/icons/*` |
 | `tools/` | build / dev scripts (Node) | the only place npm dependencies are allowed |
