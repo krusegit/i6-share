@@ -196,7 +196,7 @@ const STEPS = [
           h('summary', { text: 'Install the downloaded file from the command line instead' }),
           p('Quit Chrome completely (close every window), then run:'),
           codeBlock('google-chrome --enable-features=IsolatedWebApps,IsolatedWebAppDevMode --install-isolated-web-app-from-file="$HOME/Downloads/i6-share-hub.swbn"'),
-          p('This works too, but an app installed from a file is not updated automatically, and installing a newer file over it fails with “App is already installed”.')),
+          p('This works too, but Chrome does not update an app installed from a file, and installing a newer file over it fails with “App is already installed”. The quick install above uses this method and updates the hub when you run it again.')),
       ];
     },
   },
@@ -406,11 +406,14 @@ function renderQuickInstall() {
   render(el,
     p('Open a terminal on the Linux PC (in your desktop session, as your normal user) and run:'),
     codeBlock(cmd),
-    p('It asks for your password for ', h('code', { text: 'sudo' }), ' (installing Chrome, firewall) and closes Chrome if it is open. ',
-      'It starts nothing by itself – no autostart, and Chrome is closed again afterwards. When you want to receive files, open ', h('strong', { text: 'i6-share Hub' }), ' from your app menu; it only listens while its window is open. Then continue with step 6 below.'),
+    p('It asks for your password for ', h('code', { text: 'sudo' }), ' (installing Chrome, firewall) and nothing else. ',
+      'If Chrome is open it is closed for the install and started again afterwards; at the end the hub window opens. ',
+      'On a brand-new Chrome profile, answer Chrome’s welcome dialog when it appears. Then continue with step 6 below.'),
+    p(strong('To update the hub, run the same command again'), ' – your pairings and settings are kept.'),
+    p('Nothing starts at login: when you want to receive files, open ', strong('i6-share Hub'), ' from your app menu; it only listens while its window is open.'),
     p(h('a', { href: '../install.sh', target: '_blank', rel: 'noopener', text: 'Read the script first' }),
-      ' · options: ', h('code', { text: '--yes  --no-firewall' }),
-      ' (use ', h('code', { text: '| bash -s -- --yes' }), ')'));
+      ' · options: ', h('code', { text: '--no-firewall  --yes' }),
+      ' (use ', h('code', { text: '| bash -s -- --no-firewall' }), '; ', h('code', { text: '--yes' }), ' skips Chrome’s welcome dialog)'));
 }
 
 renderQuickInstall();

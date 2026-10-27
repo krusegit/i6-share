@@ -1,9 +1,9 @@
 {
-  "version": "1.0.4",
-  "size": 198946,
+  "version": "1.0.5",
+  "size": 206305,
   "webBundleId": "co7xxoa6ugc4opuhmvki265in2w5vxbayrvah6sni4vnkrg6jhiaaaic",
-  "commit": "cbfe5b3",
-  "committedAt": "2026-10-26T23:36:59Z",
-  "builtAt": "2026-10-26T23:37:00.178Z",
-  "sha256": "0f8e75356d8a5592daeb2c7a3202f089586e092f45d0c6cfaebc1c32e9b7edd9"
+  "commit": "b0ecbea",
+  "committedAt": "2026-10-27T00:02:37Z",
+  "builtAt": "2026-10-27T00:02:49.885Z",
+  "sha256": "a1aa1a69ca92247afb169dcae1c187a6095fb320ff39987d4e20ed1933da45fc"
 }
