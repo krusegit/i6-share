@@ -119,7 +119,7 @@ public sealed class ProtocolTests
     public void ClonesInjectedIvAndRejectsInternalKeyMisuse()
     {
         var iv = Sequence(12);
-        var key = WireCrypto.PairKey([], HubId);
+        var key = WireCrypto.PairKey(Sequence(16), HubId);
         var sealedEnvelope = WireCrypto.Seal(key, "aad", "{}"u8, iv: iv);
         iv[0] = 123;
         Assert.Equal(0, sealedEnvelope.Iv[0]);
