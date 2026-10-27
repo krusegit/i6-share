@@ -2,6 +2,10 @@
 node_modules/
 dist/
 coverage/
+**/bin/
+**/obj/
+**/TestResults/
+artifacts/
 
 # secrets – the hub signing key must never be committed
 *.pem

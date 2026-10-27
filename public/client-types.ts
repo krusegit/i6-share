@@ -1,4 +1,6 @@
 import type { Backoff, PairPayload } from './lib/proto.js';
+import type { HelloResponse, OutboxEntry, WireOperation, WireRequestMap, WireResponseMap } from './generated/contracts.js';
+export type { FileMetadata as FileMeta, OutboxEntry } from './generated/contracts.js';
 
 export interface ClientStore {
   readonly get: (key: string) => Promise<unknown>;
@@ -29,11 +31,9 @@ export interface ClientEvents {
 }
 export interface QueueRecord { tid: string; hubId: string; files: File[]; names: string[]; total: number; createdAt: number; failed: number[] }
 export interface Transfer extends QueueRecord { readonly update: (patch: Partial<TransferState>) => TransferState; readonly status: TransferStatus; readonly acked: number[]; readonly rate: number; readonly error: string | null; readonly doneAt: number; readonly abort: AbortController; readonly saved: Promise<void>; readonly rec: QueueRecord; readonly lastAt: number; readonly lastSent: number }
-export interface FileMeta { readonly name: string; readonly size: number; readonly type: string; readonly lastModified: number }
-export interface OutboxEntry { readonly tid: string; readonly files: readonly FileMeta[] }
-export interface Hello { readonly app: 'i6-share-hub'; readonly id: string; readonly name: string; readonly addrs: readonly string[] }
-export interface WireResponse { readonly secret?: string | undefined; readonly hubId?: string | undefined; readonly name?: string | undefined; readonly addrs?: readonly string[] | undefined; readonly outbox?: readonly OutboxEntry[] | undefined; readonly size?: number | undefined; readonly received?: readonly number[] | undefined; readonly ok?: boolean | undefined; readonly bytes?: number | undefined; readonly error?: string | undefined }
-export interface OpenedResponse { readonly json: WireResponse; readonly binary: Uint8Array<ArrayBuffer>; readonly iv: Uint8Array<ArrayBuffer> }
+export type Hello = HelloResponse;
+export type DeviceOperation = Exclude<WireOperation, 'pair'>;
+export interface OpenedResponse<K extends DeviceOperation> { readonly json: WireResponseMap[K]; readonly binary: Uint8Array<ArrayBuffer>; readonly iv: Uint8Array<ArrayBuffer> }
 export interface RequestOptions { readonly addr?: string | undefined; readonly timeout?: number | undefined; readonly signal?: AbortSignal | undefined }
 export interface RetryOptions extends RequestOptions { readonly backoff?: Backoff }
 export type PairStatus = 'searching' | 'pairing' | 'blocked';
@@ -77,12 +77,12 @@ export interface HubRuntime {
   readonly id: string; readonly name: string; readonly lastSeen: number;
   readonly key: () => Promise<CryptoKey>; readonly start: () => void; readonly stop: () => void;
   readonly _setStatus: (status: HubStatus) => void; readonly _seen: () => void; readonly _save: () => void;
-  readonly _learn: (addrs: readonly string[] | undefined, addr: string | null, name: string | undefined) => void;
+  readonly _learn: (addrs: readonly string[], addr: string | null, name: string) => void;
   readonly _nap: (ms: number, signal?: AbortSignal) => Promise<void>; readonly _waitWake: () => Promise<void>;
   readonly locate: () => Promise<string>; readonly _locate: () => Promise<string>;
-  readonly request: (op: string, json: Readonly<Record<string, unknown>>, binary?: ArrayBuffer | Uint8Array<ArrayBuffer> | null, options?: RequestOptions) => Promise<OpenedResponse>;
+  readonly request: <K extends DeviceOperation>(op: K, json: WireRequestMap[K], binary?: ArrayBuffer | Uint8Array<ArrayBuffer> | null, options?: RequestOptions) => Promise<OpenedResponse<K>>;
   readonly _checkUnpaired: (addr: string, code: string) => Promise<never>;
-  readonly call: HubRuntime['request']; readonly callRetry: (op: string, json: Readonly<Record<string, unknown>>, binary?: ArrayBuffer | Uint8Array<ArrayBuffer> | null, options?: RetryOptions) => Promise<OpenedResponse>;
+  readonly call: HubRuntime['request']; readonly callRetry: <K extends DeviceOperation>(op: K, json: WireRequestMap[K], binary?: ArrayBuffer | Uint8Array<ArrayBuffer> | null, options?: RetryOptions) => Promise<OpenedResponse<K>>;
   readonly _syncLoop: () => Promise<void>; readonly _receive: (outbox: readonly OutboxEntry[]) => Promise<boolean>;
   readonly _pull: (entry: OutboxEntry) => Promise<void>; readonly pump: () => void;
   readonly _send: (transfer: Transfer) => Promise<void>; readonly _sendFile: (transfer: Transfer, index: number, signal: AbortSignal, file: File) => Promise<void>;

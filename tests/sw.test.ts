@@ -172,7 +172,8 @@ describe('share target and routing', () => {
     new Request('https://example.com/app/nope', { method: 'POST' }),
     new Request('https://example.com/app/file', { headers: { range: 'bytes=0-10' } }),
     new Request('https://example.com/elsewhere'),
-    new Request('https://example.com/app/hub.swbn'),
+    new Request('https://example.com/app/downloads/i6-share-hub-linux-x64.tar.gz'),
+    new Request('https://example.com/app/downloads/version.json'),
   ])('leaves non-cacheable requests untouched', (request) => {
     const { dependencies, event } = fixture(); const e = event(request); handleFetch(dependencies, e); expect(e.respondWith).not.toHaveBeenCalled();
   });

@@ -1,14 +1,15 @@
 /** Shared, version-one wire protocol. Pure codecs are separate from Effect-managed I/O. */
 import { Effect, Ref } from 'effect';
 import { runEffect } from './runtime.js';
+import { WireConstants } from '../generated/contracts.js';
 
-export const PROTOCOL_VERSION = 1;
-export const PORT = 47616;
-export const APP_URL = 'https://krusegit.github.io/i6-share/';
-export const CHUNK_SIZE = 4 * 1024 * 1024;
-export const MAX_BODY = CHUNK_SIZE + 64 * 1024;
-export const SYNC_WAIT_MS = 25_000;
-export const PAIR_TOKEN_TTL_MS = 10 * 60 * 1000;
+export const PROTOCOL_VERSION = WireConstants.protocolVersion;
+export const PORT = WireConstants.port;
+export const APP_URL = WireConstants.appUrl;
+export const CHUNK_SIZE = WireConstants.chunkSize;
+export const MAX_BODY = WireConstants.maxBody;
+export const SYNC_WAIT_MS = WireConstants.syncWaitMs;
+export const PAIR_TOKEN_TTL_MS = WireConstants.pairTokenTtlMs;
 
 export type Bytes = Uint8Array | ArrayBuffer;
 export type JsonObject = Readonly<Record<string, unknown>>;
@@ -55,7 +56,7 @@ const bytesToHex = (bytes: Uint8Array): string =>
 export const randomId = (size = 8): string => bytesToHex(randomBytes(size));
 
 /** uint32be(json length) || UTF-8 JSON object || binary payload. */
-export const frame = (json: JsonObject | null | undefined, binary?: Bytes | null): Uint8Array<ArrayBuffer> => {
+export const frame = (json: object | null | undefined, binary?: Bytes | null): Uint8Array<ArrayBuffer> => {
   const encoded = enc.encode(JSON.stringify(json ?? {}));
   const length = new Uint8Array(4);
   new DataView(length.buffer).setUint32(0, encoded.length);
@@ -88,11 +89,11 @@ export const deviceKeyEffect = (secret: Bytes, deviceId: string): Effect.Effect<
 export const pairKey = (token: Bytes, hubId: string): Promise<CryptoKey> => runEffect(pairKeyEffect(token, hubId));
 export const deviceKey = (secret: Bytes, deviceId: string): Promise<CryptoKey> => runEffect(deviceKeyEffect(secret, deviceId));
 
-export const sealEffect = (key: CryptoKey, aad: string, json: JsonObject, binary?: Bytes | null): Effect.Effect<Sealed, unknown> =>
+export const sealEffect = (key: CryptoKey, aad: string, json: object, binary?: Bytes | null): Effect.Effect<Sealed, unknown> =>
   randomBytesEffect(12).pipe(Effect.flatMap((iv) =>
     attempt(() => crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: enc.encode(aad) }, key, frame(json, binary)))
       .pipe(Effect.map((ciphertext) => ({ body: concat([iv, new Uint8Array(ciphertext)]), iv })))));
-export const seal = (key: CryptoKey, aad: string, json: JsonObject, binary?: Bytes | null): Promise<Sealed> =>
+export const seal = (key: CryptoKey, aad: string, json: object, binary?: Bytes | null): Promise<Sealed> =>
   runEffect(sealEffect(key, aad, json, binary));
 export const openEffect = (key: CryptoKey, aad: string, body: Bytes): Effect.Effect<Envelope, unknown> =>
   Effect.suspend(() => {
@@ -189,7 +190,7 @@ export const isPrivateIp = (ip: string): boolean => {
   return (first & 0xfe) === 0xfc || (first === 0xfe && (second & 0xc0) === 0x80) ||
     bytes.every((byte, index) => byte === (index === 15 ? 1 : 0));
 };
-export const baseUrl = (ip: string, port = PORT): string => `http://${ip.includes(':') ? `[${ip}]` : ip}:${String(port)}`;
+export const baseUrl = (ip: string, port: number = PORT): string => `http://${ip.includes(':') ? `[${ip}]` : ip}:${String(port)}`;
 
 export interface Backoff { readonly next: () => number; readonly reset: () => void }
 /** Pure backoff calculation; random input is explicit so retries are deterministic in tests. */

@@ -2,7 +2,7 @@
   "name": "i6-share",
   "version": "1.0.0",
   "private": true,
-  "description": "Local-network file sharing between an Android phone (PWA) and a Linux PC (Isolated Web App hub).",
+  "description": "Local-network file sharing between a phone PWA and a dashboard-scoped Native AOT .NET hub.",
   "type": "module",
   "scripts": {
     "build": "tsx tools/cli.ts build",
@@ -16,7 +16,14 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "vitest run tests/e2e.test.ts",
-    "check": "npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage && npm run build && npm run test:e2e"
+    "check": "npm run contracts:check && npm run native:lint && npm run native:test && npm run native:coverage && npm run typecheck && npm run lint && npm run type-coverage && npm run test:coverage && npm run build && npm run test:e2e",
+    "contracts:generate": "dotnet run --project native/I6Share.TypeGen -- --output public/generated/contracts.ts",
+    "contracts:check": "dotnet run --project native/I6Share.TypeGen -- --check --output public/generated/contracts.ts",
+    "native:build": "npm run native:lines && dotnet build native/I6Share.slnx -warnaserror",
+    "native:test": "tsx tools/cli.ts clean:native-coverage && dotnet test native/I6Share.slnx -warnaserror --settings native/coverage.runsettings --results-directory artifacts/native-coverage",
+    "native:coverage": "tsx tools/cli.ts check:native-coverage",
+    "native:lint": "npm run native:build && dotnet format native/I6Share.slnx --verify-no-changes --no-restore --severity info",
+    "native:lines": "tsx tools/cli.ts check:native-lines"
   },
   "engines": {
     "node": ">=22.13"
@@ -34,9 +41,7 @@
     "type-coverage": "^2.30.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1",
-    "vitest": "^5.0.5",
-    "wbn": "^0.0.9",
-    "wbn-sign": "^0.3.3"
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "effect": "^4.0.6"

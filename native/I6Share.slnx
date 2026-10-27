@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="I6Share.Contracts.Tests/I6Share.Contracts.Tests.csproj" />
+  <Project Path="I6Share.Contracts/I6Share.Contracts.csproj" />
+  <Project Path="I6Share.Hub.Tests/I6Share.Hub.Tests.csproj" />
+  <Project Path="I6Share.Hub/I6Share.Hub.csproj" />
+  <Project Path="I6Share.TypeGen/I6Share.TypeGen.csproj" />
+</Solution>

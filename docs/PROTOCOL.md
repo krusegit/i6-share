@@ -1,54 +1,48 @@
 # i6-share architecture & wire protocol (v1)
 
-i6-share moves files between an **Android phone (or any Chrome)** and a **Linux PC** over the
-local network only, with no internet server of any kind.
+i6-share moves files between an Android phone PWA and a native .NET 10 hub over the local
+network. The backend is compiled with Native AOT; its browser dashboard is served locally.
 
-```
- ┌──────────────────────────────┐   HTTP over LAN (encrypted bodies)   ┌──────────────────────────────┐
- │ Phone: installed PWA         │ ───────────────────────────────────▶ │ Linux: i6-share Hub (IWA)    │
- │ https://krusegit.github.io/  │   fetch("http://192.168.x.y:47616")  │ Direct Sockets TCPServerSocket│
- │ i6-share/  (GitHub Pages)    │ ◀─────────────────────────────────── │ tiny HTTP/1.1 server on :47616│
- │ share target, QR pairing     │   responses / long-poll / pulls      │ saves files to a folder       │
- └──────────────────────────────┘                                      └──────────────────────────────┘
+```text
+Phone PWA (HTTPS, cached offline)  <-- encrypted HTTP / TCP 47616 -->  Native hub
+                                                                       |
+                                                            Filesystem + local dashboard
 ```
 
-* A browser page cannot listen on a socket, so the **hub (IWA) is the only listener**; the phone
-  always initiates. Hub → phone transfers are delivered by the phone polling (`/i6/sync`) and
-  pulling (`/i6/pull`).
-* The phone page is HTTPS (GitHub Pages) and talks to `http://<private-ip>:47616`. Chrome allows
-  this under **Local Network Access**: the user grants "access devices on your local network"
-  once, and requests to private-IP literals are exempt from mixed-content blocking.
-* GitHub Pages only delivers the code. The service worker caches it; after that everything works
-  offline on the LAN.
+The phone always initiates LAN connections. Hub → phone delivery uses long polling and
+chunked pulls. The phone's HTTPS page accesses private-IP HTTP endpoints under Chrome's Local
+Network Access permission. The local administration dashboard is a separate trust boundary:
+its WebSocket lifetime connection keeps the process alive while any dashboard tab remains
+open; closing the last tab stops the backend after a reload grace period. Its API requires a per-process token and loopback/local-host checks, and does not share the
+protocol's permissive CORS policy.
 
-## Repository layout
+## Contract ownership and implementation
 
-| Path | What | Notes |
-|---|---|---|
-| `public/` | Phone app TypeScript source and static assets | compiled to `dist/public/` for deployment |
-| `public/index.html`, `public/app.ts`, `public/sw.ts`, `public/manifest.webmanifest` | Phone/desktop client PWA | share target, pairing, sending, receiving |
-| `public/style.css` | Material Design 2 theme | shared by all three UIs |
-| `public/lib/proto.ts` | protocol + crypto | **shared contract – do not fork** |
-| `public/lib/dom.ts` | DOM helpers, icons, MD2 components | Trusted-Types safe (no innerHTML) |
-| `public/lib/store.ts` | IndexedDB wrapper | stores: `kv`, `hubs`, `devices`, `queue` |
-| `public/setup/` | Linux onboarding wizard | install the hub IWA step by step |
-| `hub/i6-share-hub.swbn` (on gh-pages) | built, signed hub bundle + `version.json` + `update.json` | built and signed by CI (`.github/workflows/pages.yml`) when `hub/manifest.webmanifest` version changes; `npm run build:hub` writes a local test build to the git-ignored `dist/public/hub/` |
-| `public/icons/` | PNG/SVG icons | used by PWA, hub and wizard |
-| `hub/` | Hub IWA source | bundled together with `public/lib/*`, `public/style.css`, `public/icons/*` |
-| `tools/` | TypeScript/Effect build and dev tools (Node) | esbuild bundles browser dependencies; wbn/wbn-sign create signed IWAs |
+| Path | Responsibility |
+|---|---|
+| `native/I6Share.Contracts/` | Authoritative immutable C# request/response DTOs and wire constants |
+| `native/I6Share.TypeGen/` | Build-time deterministic TypeScript interface + Effect schema generation |
+| `public/generated/contracts.ts` | Generated readonly DTOs, validators, and operation mappings |
+| `native/I6Share.Hub/Protocol/` | Native HKDF/AES-GCM envelope and compact pairing codecs |
+| `native/I6Share.Hub/Core/` | Pairing, trust, transfers, resumption, outbox, and long polling |
+| `native/I6Share.Hub/Storage/` | Atomic durable snapshots, partial-file sinks, and outbox copies |
+| `native/I6Share.Hub/Hosting/` | Kestrel transport, local administration, and static dashboard hosting |
+| `public/client.ts` | Phone transfer engine using generated request/response contracts |
+| `public/lib/proto.ts` | Browser implementation of the identical v1 binary/cryptographic format |
+| `hub/` | Local dashboard and QR rendering; no socket or filesystem privileges in the browser |
+| `public/setup/` | Native Linux install/start/pair guide |
+| `tools/` | Browser build, native release packaging, and development commands |
 
-Inside the hub bundle, paths are: `/index.html`, `/hub.js`, `/…other hub files`, `/lib/*.js`,
-`/style.css`, `/icons/*`. Hub TypeScript imports shared modules from `../public/lib/` in
-the source tree; esbuild resolves and bundles those imports. Build metadata remains a relative
-`./build-info.js` import so the signed manifest version is shown correctly.
+C# is the source of truth for JSON DTOs. Change contracts there, regenerate TypeScript, and
+run the drift check and cross-language tests. The generator may inspect types at build time;
+the published native backend uses `WireJsonContext` source-generated JSON metadata and does
+not depend on reflection-based serialization. TypeScript validates unknown network and stored
+values with generated Effect schemas. Binary framing and cryptography have matching golden
+vectors on both sides.
 
-Rules for application code: strict TypeScript, functions instead of classes, validated unknown
-values at external boundaries, and Effect programs for I/O and resource lifecycle. Pure protocol
-transformations retain the same v1 wire format. Dependencies are bundled locally; no CDNs or
-remote code. No `innerHTML`/`eval`/inline scripts or inline event handlers (IWA CSP + Trusted
-Types). Use `h()` from `public/lib/dom.ts` to build DOM. Relative URLs only (Pages serves under
-`/i6-share/`). `npm run check` enforces strict typing, lint rules, and complete per-file test
-coverage before publishing.
+The local admin API uses ordinary authenticated JSON; `/i6/*` retains the encrypted v1
+protocol below. Native state is separate from the former browser hub's IndexedDB. Existing
+phones can speak v1, but must pair with the native hub's newly created identity once.
 
 ## Identity & pairing
 
@@ -145,7 +139,7 @@ Semantics:
 * **cancel** discards partial data for the tid.
 * **pull**: phone downloads hub→phone file `i` of outbox entry `tid` in chunks; `length` ≤
   `CHUNK_SIZE`. **pulled** removes the entry from the hub outbox.
-* Hub keeps partial incoming transfers in memory (and their open writables) for at least
+* Hub keeps partial incoming transfers in memory (and their temporary native files) for at least
   1 hour of inactivity, so a phone that loses Wi-Fi or gets backgrounded resumes where it was.
 
 ## Reliability rules (both sides)

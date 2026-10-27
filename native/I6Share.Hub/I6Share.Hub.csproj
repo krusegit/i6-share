@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>i6-share-hub</AssemblyName>
+    <RootNamespace>I6Share.Hub</RootNamespace>
+    <Version>1.1.0</Version>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <!-- Keep macOS debug information embedded: bundled runtime libraries reference
+         vendor-only Clang module caches that dsymutil cannot resolve. -->
+    <StripSymbols Condition="'$(RuntimeIdentifier)' == 'osx-arm64' Or '$(RuntimeIdentifier)' == 'osx-x64'">false</StripSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../I6Share.Contracts/I6Share.Contracts.csproj" />
+  </ItemGroup>
+</Project>

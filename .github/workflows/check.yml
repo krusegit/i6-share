@@ -11,18 +11,29 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
       - run: npm ci
       - run: npm run check
+      - run: npm run build:hub
+      - name: Exercise Native AOT
+        env:
+          I6_NATIVE_BINARY: ${{ github.workspace }}/dist/native/linux-x64/i6-share-hub
+        run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage
-          path: coverage/
+          path: |
+            coverage/
+            artifacts/native-coverage/
           if-no-files-found: ignore

@@ -6,14 +6,14 @@ import type { ClientEvents, Fetch, HubRecord, PairIdentity, ShareEngine } from '
 
 const payload: PairPayload = { hubId: '0123456789abcdef', token: new Uint8Array(16), port: 47616, addrs: ['127.0.0.1'], name: 'QR computer' };
 const identity: PairIdentity = { deviceId: 'fedcba9876543210', name: 'Phone', os: 'android' };
-const helloResponse = (name = 'Hello computer', id = payload.hubId): Response => Response.json({ app: 'i6-share-hub', id, name, addrs: ['127.0.0.1'] });
+const helloResponse = (name = 'Hello computer', id = payload.hubId): Response => Response.json({ app: 'i6-share-hub', v: 1, port: payload.port, id, name, addrs: ['127.0.0.1'] });
 const encryptedFetch = (json: Readonly<Record<string, unknown>>, helloName = 'Hello computer'): Fetch => async (input, init) => {
   if (new Request(input).url.endsWith('/i6/hello')) return helloResponse(helloName);
   const body = await new Request(input, init).arrayBuffer();
   const key = await pairKey(payload.token, payload.hubId);
   const decoded = await open(key, requestAad('pair', 'pair'), body);
   expect(decoded.json).toEqual({ deviceId: identity.deviceId, name: identity.name, os: identity.os });
-  const result = await seal(key, responseAad('pair', decoded.iv), json);
+  const result = await seal(key, responseAad('pair', decoded.iv), { hubId: payload.hubId, name: '', ...json });
   return new Response(result.body);
 };
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers(); });
@@ -193,11 +193,15 @@ const networkFixture = async (respond: (request: NetworkRequest) => NetworkReply
   await engine.init({ visible: false, name: identity.name, os: identity.os });
   return { engine, counts };
 };
-const normalReply = ({ op, request }: NetworkRequest): NetworkReply | Promise<NetworkReply> => {
-  if (op === 'hello') return { app: 'i6-share-hub', id: payload.hubId, name: 'Computer', addrs: ['127.0.0.1'] };
+const normalReply = async ({ op, request }: NetworkRequest): Promise<NetworkReply> => {
+  if (op === 'hello') return { app: 'i6-share-hub', v: 1, port: payload.port, id: payload.hubId, name: 'Computer', addrs: ['127.0.0.1'] };
   if (op === 'sync') return holdRequest(request.signal);
   if (op === 'offer') return { received: [] };
-  if (op === 'put') return {};
+  if (op === 'put') {
+    const key = await deviceKey(new Uint8Array(32), identity.deviceId);
+    const decoded = await open(key, requestAad(op, identity.deviceId), await request.clone().arrayBuffer());
+    return { bytes: Number(decoded.json['offset']) + decoded.binary.length };
+  }
   return { ok: true };
 };
 const waitForEvent = <K extends keyof ClientEvents>(engine: ShareEngine, kind: K, matches: (detail: ClientEvents[K]) => boolean): Promise<ClientEvents[K]> => new Promise((resolve) => {
@@ -273,7 +277,7 @@ describe('sync scheduling and recovery', () => {
     const { engine, counts } = await networkFixture((request) => {
       if (request.op === 'hello' && request.count === 1 && mode === 'offline') return Promise.reject(new Error('offline'));
       if (request.op === 'sync' && request.count === 1 && mode !== 'offline') return mode === 'network' ? Promise.reject(new Error('offline')) : new Response('{}', { status: 503 });
-      if (request.op === 'sync' && request.count === (mode === 'offline' ? 1 : 2)) return {};
+      if (request.op === 'sync' && request.count === (mode === 'offline' ? 1 : 2)) return { name: 'Computer', addrs: [], outbox: [] };
       return normalReply(request);
     });
     engine.setVisible(true);
@@ -285,7 +289,7 @@ describe('sync scheduling and recovery', () => {
     vi.spyOn(Date, 'now').mockImplementation(() => clock.now);
     const sleep = vi.spyOn(protocol, 'sleep').mockResolvedValue();
     const { engine, counts } = await networkFixture((request) => {
-      if (request.op === 'sync' && request.count === 1) { clock.now += 1500; return { outbox: [] }; }
+      if (request.op === 'sync' && request.count === 1) { clock.now += 1500; return { name: 'Computer', addrs: [], outbox: [] }; }
       return normalReply(request);
     });
     engine.setVisible(true); await vi.waitFor(() => { expect(counts.get('sync')).toBe(2); });
@@ -295,7 +299,7 @@ describe('sync scheduling and recovery', () => {
     const deferred = Promise.withResolvers<NetworkReply>();
     const { engine, counts } = await networkFixture((request) => request.op === 'sync' ? deferred.promise : normalReply(request));
     engine.setVisible(true); await vi.waitFor(() => { expect(counts.get('sync')).toBe(1); });
-    engine.stop(); deferred.resolve({ name: 'Late reply', outbox: [] });
+    engine.stop(); deferred.resolve({ name: 'Late reply', addrs: [], outbox: [] });
     await vi.waitFor(() => { expect(engine.hub(payload.hubId)?.name).toBe('Late reply'); });
   });
   it('uses the last known address to unpair before discovery starts', async () => {
@@ -318,7 +322,7 @@ describe('concurrent network operations', () => {
     engine.setVisible(true); await vi.waitFor(() => { expect(counts.get('sync')).toBe(1); });
     const tid = await engine.send(payload.hubId, [new File(['data'], 'data')]);
     await vi.waitFor(() => { expect(engine.hub(payload.hubId)?.addr).toBeNull(); });
-    sync.resolve({ name: 'Late name' });
+    sync.resolve({ name: 'Late name', addrs: [], outbox: [] });
     await vi.waitFor(() => { expect(engine.hub(payload.hubId)?.name).toBe('Late name'); });
     await engine.cancel(tid); engine.stop();
   });
@@ -326,7 +330,7 @@ describe('concurrent network operations', () => {
     const download = Promise.withResolvers<NetworkReply>();
     const firstUpload = Promise.withResolvers<NetworkReply>();
     const { engine, counts } = await networkFixture((request) => {
-      if (request.op === 'sync' && request.count === 1) return { outbox: [{ tid: 'incoming', files: [{ name: 'incoming', type: '', size: 1, lastModified: 0 }] }] };
+      if (request.op === 'sync' && request.count === 1) return { name: 'Computer', addrs: [], outbox: [{ tid: 'incoming', files: [{ name: 'incoming', type: '', size: 1, lastModified: 0 }] }] };
       if (request.op === 'pull') return download.promise;
       if (request.op === 'offer' && request.count === 1) return firstUpload.promise;
       return normalReply(request);
@@ -336,7 +340,7 @@ describe('concurrent network operations', () => {
     const first = await engine.send(payload.hubId, [new File(['first'], 'first')]);
     await vi.waitFor(() => { expect(counts.get('offer')).toBe(1); });
     const second = await engine.send(payload.hubId, [new File(['second'], 'second')]);
-    firstUpload.resolve({});
+    firstUpload.resolve({ received: [] });
     await vi.waitFor(() => { expect(engine.transfers.filter((transfer) => transfer.status === 'done')).toHaveLength(2); });
     expect(engine.transfers.map((transfer) => transfer.tid)).toEqual([first, second]); expect(busy).toEqual([true]);
     download.resolve({ size: 0 });

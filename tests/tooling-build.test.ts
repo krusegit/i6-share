@@ -3,11 +3,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { Effect } from 'effect';
-import { Bundle } from 'wbn';
-import { WebBundleId } from 'wbn-sign';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildSite, copyStatic } from '../tools/build.js';
-import { BUNDLE_NAME, buildHub, createUnsignedBundle, loadOrCreateKey, lowerHeaders, validateSignedBundle, writeAtomic, type SignedBundle } from '../tools/build-hub.js';
+import { buildHub, readVersion, runHub, runProcess, runtimeIdentifier, type ProcessRunner } from '../tools/build-hub.js';
 import type { BuildInfo } from '../tools/build-info.js';
 
 const directories: string[] = [];
@@ -19,7 +17,8 @@ const fixture = (root: string): void => {
   write(path.join(root, 'public/index.html'), '<script type="module" src="app.js"></script>');
   write(path.join(root, 'public/style.css'), 'body{}'); write(path.join(root, 'public/legacy.js'), 'bad'); write(path.join(root, 'public/hub/old.swbn'), 'old');
   write(path.join(root, 'hub/index.html'), '<script type="module" src="hub.js"></script>');
-  write(path.join(root, 'hub/manifest.webmanifest'), '{"version":"1.0.0"}');
+  write(path.join(root, 'native/version.json'), '{"version":"1.1.0"}');
+  write(path.join(root, 'public/icons/icon.svg'), '<svg/>');
   write(path.join(root, 'public/build-info.ts'), 'export const BUILD = {};');
   write(path.join(root, 'public/app.ts'), "import { BUILD } from './build-info.js'; import './backupapp.js'; export const initializePhoneUi = async () => { console.log(BUILD); };");
   write(path.join(root, 'public/backupapp.ts'), 'export const value = 1;');
@@ -61,44 +60,69 @@ describe('offline browser build', () => {
   });
 });
 
-describe('signed IWA builds', () => {
-  it('creates private identity keys, reuses them, warns for loose modes and rejects corrupt keys', () => {
-    const dir = temporary(); const keyPath = path.join(dir, 'keys/key.pem'); const warn = vi.fn<(message: string) => void>();
-    const first = loadOrCreateKey(keyPath, warn); const second = loadOrCreateKey(keyPath, warn);
-    expect(first.export({ format: 'pem', type: 'pkcs8' })).toEqual(second.export({ format: 'pem', type: 'pkcs8' })); expect(warn).toHaveBeenCalledOnce();
-    fs.chmodSync(keyPath, 0o644); loadOrCreateKey(keyPath, warn); expect(warn).toHaveBeenCalledTimes(2);
-    write(keyPath, 'invalid'); expect(() => loadOrCreateKey(keyPath, warn)).toThrow();
-    writeAtomic(path.join(dir, 'atomic'), 'content'); expect(fs.readFileSync(path.join(dir, 'atomic'), 'utf8')).toBe('content');
-    expect(lowerHeaders({ 'X-Test': 'ok' })).toEqual({ 'x-test': 'ok' });
+
+describe('native AOT builds', () => {
+  it('selects only supported native target platforms', () => {
+    expect(runtimeIdentifier('linux', 'x64')).toBe('linux-x64'); expect(runtimeIdentifier('linux', 'arm64')).toBe('linux-arm64');
+    expect(runtimeIdentifier('darwin', 'x64')).toBe('osx-x64'); expect(runtimeIdentifier('darwin', 'arm64')).toBe('osx-arm64');
+    expect(runtimeIdentifier()).toMatch(/^(linux|osx)-(x64|arm64)$/);
+    expect(() => runtimeIdentifier('win32', 'x64')).toThrow('Unsupported'); expect(() => runtimeIdentifier('linux', 'ia32')).toThrow('Unsupported');
+    expect(readVersion()).toBe('1.1.0');
   });
-  it('builds and validates actual signed bytes, manifest aliases, redirects, hashes and update metadata', async () => {
-    const root = temporary(); fixture(root); const out = await Effect.runPromise(buildSite({ root, info })); const keyPath = path.join(root, 'key.pem');
-    const result = await Effect.runPromise(buildHub({ hubDir: path.join(out, 'hub'), publicDir: path.join(out, 'public'), outDir: path.join(root, 'release'), keyPath, info }));
-    expect(result.version).toBe('1.0.0');
-    const bytes = fs.readFileSync(path.join(root, 'release', BUNDLE_NAME)); expect(result.size).toBe(bytes.length);
-    expect(result.sha256).toBe(crypto.createHash('sha256').update(bytes).digest('hex'));
-    expect(fs.readFileSync(path.join(root, 'release/update.json'), 'utf8')).toContain(BUNDLE_NAME);
-    const key = loadOrCreateKey(keyPath); const id = new WebBundleId(key).serialize();
-    const unsigned = createUnsignedBundle([{ file: path.join(root, 'hub/index.html'), urlPath: '/index.html' }, { file: path.join(root, 'public/style.css'), urlPath: '/style.css' }], id, info);
-    const bundle = new Bundle(unsigned); expect(bundle.getResponse(`isolated-app://${id}/index.html`).status).toBe(301);
-    expect(bundle.getResponse(`isolated-app://${id}/`).status).toBe(200);
-    vi.stubEnv('I6_HUB_DIR', path.join(out, 'hub')); vi.stubEnv('I6_SIGNING_KEY', keyPath); vi.stubEnv('I6_OUT_DIR', path.join(root, 'env-release'));
-    const envResult = await Effect.runPromise(buildHub({ publicDir: path.join(out, 'public') })); expect(envResult.webBundleId).toBe(result.webBundleId);
-  });
-  it('rejects tampered signatures and identity mismatch', () => {
-    const good: SignedBundle = { getWebBundleId: () => 'id', validateSignatures: () => [{ status: 'success', isValid: true }], getSignedWebBundleBytes: () => new Uint8Array([1]) };
-    expect(validateSignedBundle(good, 'id')).toEqual(new Uint8Array([1])); expect(() => validateSignedBundle(good, 'different')).toThrow('mismatch');
-    expect(() => validateSignedBundle({ ...good, validateSignatures: () => [{ status: 'failure' }] }, 'id')).toThrow('Signature');
-    expect(() => validateSignedBundle({ ...good, validateSignatures: () => [{ status: 'success', isValid: false }] }, 'id')).toThrow('Signature');
-  });
-  it('fails invalid versions, signing errors, filesystem errors and missing builds', async () => {
+  it('publishes AOT and ships only the executable and dashboard with checksum metadata', async () => {
     const root = temporary(); fixture(root); const out = await Effect.runPromise(buildSite({ root, info }));
-    const options = { hubDir: path.join(out, 'hub'), publicDir: path.join(out, 'public'), outDir: path.join(root, 'release'), keyPath: path.join(root, 'key.pem') };
-    await expect(Effect.runPromise(buildHub(options, () => Promise.reject(new Error('signing failed'))))).rejects.toThrow('signing failed');
-    write(path.join(out, 'hub/manifest.webmanifest'), '{"version":"bad"}'); await expect(Effect.runPromise(buildHub(options))).rejects.toThrow('version');
-    vi.stubEnv('I6_HUB_DIR', path.join(root, 'missing')); vi.stubEnv('I6_SIGNING_KEY', ''); vi.stubEnv('I6_OUT_DIR', '');
-    await expect(Effect.runPromise(buildHub())).rejects.toThrow('No index');
-    vi.unstubAllEnvs(); const exists = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    await expect(Effect.runPromise(buildHub())).rejects.toThrow('No index'); exists.mockRestore();
+    const calls: string[][] = [];
+    const run: ProcessRunner = async (command, args, cwd) => {
+      calls.push([command, ...args]);
+      if (command === 'dotnet') write(path.join(root, 'dist/native/linux-x64/i6-share-hub'), 'native executable');
+      else await runProcess(command, args, cwd);
+    };
+    const result = await Effect.runPromise(buildHub({ root, rid: 'linux-x64', hostRid: 'linux-x64', info }, run));
+    expect(calls[0]).toContain('-p:PublishAot=true'); expect(calls[0]).toContain('-p:Version=1.1.0');
+    expect(result.file).toBe('i6-share-hub-linux-x64.tar.gz');
+    const archive = path.join(out, 'public/downloads', result.file); const bytes = fs.readFileSync(archive);
+    expect(result.sha256).toBe(crypto.createHash('sha256').update(bytes).digest('hex')); expect(result.size).toBe(bytes.length);
+    expect(fs.readFileSync(`${archive}.sha256`, 'utf8')).toBe(`${result.sha256}  ${result.file}\n`);
+    expect(fs.readFileSync(path.join(out, 'public/downloads/linux-x64.json'), 'utf8')).toContain(result.sha256);
+    expect(fs.existsSync(path.join(root, 'dist/native/linux-x64/wwwroot/hub.js.map'))).toBe(false);
+    const extracted = path.join(root, 'extracted'); fs.mkdirSync(extracted);
+    await runProcess('tar', ['-xzf', archive, '-C', extracted], root);
+    expect(fs.readFileSync(path.join(extracted, 'i6-share-hub'), 'utf8')).toBe('native executable');
+    expect(fs.existsSync(path.join(extracted, 'wwwroot/style.css'))).toBe(true);
+    expect(fs.existsSync(path.join(extracted, 'wwwroot/icons/icon.svg'))).toBe(true);
+    const other = path.join(root, 'custom-downloads');
+    const second = await Effect.runPromise(buildHub({ root, rid: 'linux-x64', hostRid: 'linux-x64', outDir: other, webRoot: path.join(out, 'hub') }, run));
+    expect(second.version).toBe('1.1.0');
+  });
+  it('rejects cross-platform compilation, invalid versions, missing assets and publishing/packaging failures', async () => {
+    const root = temporary(); fixture(root); const out = await Effect.runPromise(buildSite({ root, info }));
+    await expect(Effect.runPromise(buildHub({ root, rid: 'linux-x64', hostRid: 'osx-arm64' }))).rejects.toThrow('target runner');
+    write(path.join(root, 'native/version.json'), '{"version":"bad"}');
+    await expect(Effect.runPromise(buildHub({ root }))).rejects.toThrow();
+    write(path.join(root, 'native/version.json'), JSON.stringify({ version: '1.1.0\n' }));
+    await expect(Effect.runPromise(buildHub({ root }))).rejects.toThrow();
+    write(path.join(root, 'native/version.json'), '{"version":"1.1.0"}');
+    await expect(Effect.runPromise(buildHub({ root, webRoot: path.join(root, 'missing') }))).rejects.toThrow('Build the dashboard');
+    await expect(Effect.runPromise(buildHub({ root }, () => Promise.reject(new Error('compiler failed'))))).rejects.toThrow('compiler failed');
+    await expect(Effect.runPromise(buildHub({ root }, () => Promise.resolve()))).rejects.toThrow();
+    const options = { root, rid: 'linux-x64', hostRid: 'linux-x64', webRoot: path.join(out, 'hub') } as const;
+    await expect(Effect.runPromise(buildHub(options, () => { fs.mkdirSync(path.join(root, 'dist/native/linux-x64/i6-share-hub'), { recursive: true }); return Promise.resolve(); }))).rejects.toThrow('did not produce');
+    await expect(Effect.runPromise(buildHub(options, (command) => {
+      if (command === 'dotnet') { write(path.join(root, 'dist/native/linux-x64/i6-share-hub')); return Promise.resolve(); }
+      return Promise.reject(new Error('archive failed'));
+    }))).rejects.toThrow('archive failed');
+    await expect(Effect.runPromise(buildHub(options, () => { write(path.join(root, 'dist/native/linux-x64/i6-share-hub')); return Promise.resolve(); }))).rejects.toThrow();
+    const exists = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+    await expect(Effect.runPromise(buildHub())).rejects.toThrow('Build the dashboard'); exists.mockRestore();
+  });
+  it('runs native development and propagates process exit, signals and spawn errors', async () => {
+    const run = vi.fn<ProcessRunner>().mockResolvedValue(undefined);
+    await Effect.runPromise(runHub('/repo', run)); expect(run).toHaveBeenCalledWith('dotnet', ['run', '--project', '/repo/native/I6Share.Hub', '--', '--web-root', '/repo/dist/hub'], '/repo');
+    run.mockRejectedValueOnce(new Error('native failed')); await expect(Effect.runPromise(runHub(undefined, run))).rejects.toThrow('native failed');
+    await runProcess(process.execPath, ['-e', 'process.exit(0)'], temporary());
+    await expect(runProcess(process.execPath, ['-e', 'process.exit(7)'], temporary())).rejects.toThrow('7');
+    await expect(runProcess(process.execPath, ['-e', 'process.kill(process.pid,"SIGTERM")'], temporary())).rejects.toThrow('SIGTERM');
+    await expect(runProcess('i6-missing-command', [], temporary())).rejects.toThrow();
+    await expect(Effect.runPromise(runHub('/i6-missing-working-directory'))).rejects.toThrow();
   });
 });

@@ -6,7 +6,6 @@ import path from 'node:path';
 import { Effect } from 'effect';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createStaticServer, listenServer, publicResponse, readStaticFile, startDevServer, type StaticRequest } from '../tools/dev-server.js';
-import { hubResponse, startHubDevServer } from '../tools/dev-hub.js';
 
 const directories: string[] = [];
 const servers: http.Server[] = [];
@@ -45,22 +44,6 @@ describe('phone dev responses', () => {
   });
 });
 
-describe('hub dev responses', () => {
-  it('adds isolation headers to files, errors, redirects and metadata', async () => {
-    const root = temporary(); const dir = path.join(root, 'hub'); const pub = path.join(root, 'public');
-    write(path.join(dir, 'index.html'), 'hub'); write(path.join(dir, 'nested/index.html'), 'nested'); write(path.join(dir, 'manifest.webmanifest'), '{"version":"7.2"}');
-    const resolve = (url: string, method = 'GET') => Effect.runPromise(hubResponse(request(url, method), dir, pub));
-    expect((await resolve('/')).body).toEqual(Buffer.from('hub')); expect((await resolve('/')).headers['Cross-Origin-Opener-Policy']).toBe('same-origin');
-    expect((await resolve('/nested')).headers['Location']).toBe('/nested/'); expect((await resolve('/missing')).status).toBe(404);
-    expect((await resolve('/build-info.js', 'HEAD')).body).toContain('7.2');
-    expect((await resolve('/', 'DELETE')).status).toBe(405); expect((await resolve('/%ZZ')).status).toBe(400);
-    write(path.join(dir, 'manifest.webmanifest'), 'bad'); expect((await resolve('/build-info.js')).body).toContain('"version": null');
-    const read = vi.spyOn(fs, 'readFileSync').mockImplementation(() => { throw new Error('not readable'); });
-    await expect(resolve('/index.html')).rejects.toThrow('not readable'); read.mockRestore();
-    expect((await Effect.runPromise(hubResponse(request('/%ZZ')))).status).toBe(400);
-  });
-});
-
 describe('HTTP dev adapters', () => {
   it('serves GET/HEAD and reports typed failures while preserving a live listener', async () => {
     const dir = temporary(); write(path.join(dir, 'index.html'), 'hello');
@@ -85,8 +68,7 @@ describe('HTTP dev adapters', () => {
   });
   it('starts each app with custom ports and supports default start options', async () => {
     const publicServer = await Effect.runPromise(startDevServer({ port: 0 })); servers.push(publicServer);
-    const hubServer = await Effect.runPromise(startHubDevServer({ port: 0 })); servers.push(hubServer);
-    expect((await fetch(`${baseUrl(publicServer)}/%ZZ`)).status).toBe(400); expect((await fetch(`${baseUrl(hubServer)}/%ZZ`)).status).toBe(400);
+    expect((await fetch(`${baseUrl(publicServer)}/%ZZ`)).status).toBe(400);
     const fake = http.createServer();
     const listen = vi.spyOn(fake, 'listen').mockImplementation((...args: readonly unknown[]) => {
       const callback = args.find((value): value is () => void => typeof value === 'function'); callback?.(); return fake;
@@ -94,8 +76,6 @@ describe('HTTP dev adapters', () => {
     vi.spyOn(http, 'createServer').mockReturnValue(fake);
     expect(await Effect.runPromise(startDevServer())).toBe(fake);
     expect(listen).toHaveBeenCalledWith(8080, '127.0.0.1', expect.any(Function));
-    expect(await Effect.runPromise(startHubDevServer())).toBe(fake);
-    expect(listen).toHaveBeenCalledWith(5193, '127.0.0.1', expect.any(Function));
     expect(await Effect.runPromise(listenServer(fake))).toBe(fake);
   });
 });

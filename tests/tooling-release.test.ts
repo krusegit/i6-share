@@ -1,9 +1,10 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { Effect } from 'effect';
 import { afterEach, describe, expect, it } from 'vitest';
-import { compareVersions, readMetadataField } from '../tools/release.js';
+import { assembleRelease, compareVersions, readMetadataField } from '../tools/release.js';
 
 const directories: string[] = [];
 const temporary = (): string => { const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'i6-release-')); directories.push(directory); return directory; };
@@ -41,5 +42,37 @@ describe('release metadata', () => {
       fs.writeFileSync(file, contents);
       await expect(Effect.runPromise(readMetadataField(file, 'version'))).rejects.toThrow();
     }
+  });
+});
+
+
+describe('native download catalog', () => {
+  const artifact = (directory: string, rid: string, overrides: Readonly<Record<string, unknown>> = {}): void => {
+    const file = `i6-share-hub-${rid}.tar.gz`;
+    const contents = Buffer.from(rid);
+    fs.writeFileSync(path.join(directory, file), contents);
+    fs.writeFileSync(path.join(directory, `${rid}.json`), JSON.stringify({ version: '1.1.0', file, size: contents.length, sha256: crypto.createHash('sha256').update(contents).digest('hex'), ...overrides }));
+  };
+  it('requires both verified artifacts and emits a stable installer manifest', async () => {
+    const directory = temporary(); artifact(directory, 'linux-x64'); artifact(directory, 'linux-arm64');
+    const manifest = await Effect.runPromise(assembleRelease(directory));
+    expect(manifest.version).toBe('1.1.0');
+    expect(manifest.artifacts['linux-x64'].file).toBe('i6-share-hub-linux-x64.tar.gz');
+    expect(manifest.artifacts['linux-arm64'].size).toBe(11);
+    expect(JSON.parse(fs.readFileSync(path.join(directory, 'version.json'), 'utf8'))).toEqual(manifest);
+  });
+  it('rejects missing metadata, unsafe filenames, mismatched hashes/sizes and release versions', async () => {
+    const directory = temporary();
+    await expect(Effect.runPromise(assembleRelease(directory))).rejects.toThrow();
+    artifact(directory, 'linux-x64'); artifact(directory, 'linux-arm64', { file: '../escape.tar.gz' });
+    await expect(Effect.runPromise(assembleRelease(directory))).rejects.toThrow('Unexpected download filename');
+    artifact(directory, 'linux-arm64', { size: 1 });
+    await expect(Effect.runPromise(assembleRelease(directory))).rejects.toThrow('integrity mismatch');
+    artifact(directory, 'linux-arm64', { sha256: 'bad' });
+    await expect(Effect.runPromise(assembleRelease(directory))).rejects.toThrow('integrity mismatch');
+    artifact(directory, 'linux-arm64', { version: '2' });
+    await expect(Effect.runPromise(assembleRelease(directory))).rejects.toThrow('different versions');
+    artifact(directory, 'linux-x64', { version: 'bad' }); artifact(directory, 'linux-arm64', { version: 'bad' });
+    await expect(Effect.runPromise(assembleRelease(directory))).rejects.toThrow('Invalid numeric version');
   });
 });

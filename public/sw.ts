@@ -1,7 +1,7 @@
 import { Effect } from 'effect';
 import { store } from './lib/store.js';
 
-export const CACHE = 'i6-share-1.0.4';
+export const CACHE = 'i6-share-1.1.0';
 export const SHELL = [
   './', './index.html', './app.js', './app.css', './client.js', './style.css',
   './lib/proto.js', './lib/dom.js', './lib/store.js', './manifest.webmanifest', './build-info.js',
@@ -123,7 +123,7 @@ export const handleFetch = (dependencies: WorkerDependencies, event: WorkerFetch
     event.respondWith(Effect.runPromise(receiveShare(dependencies, request)));
     return;
   }
-  if (request.method !== 'GET' || request.headers.has('range') || !url.href.startsWith(scope.registration.scope) || url.pathname.endsWith('.swbn')) return;
+  if (request.method !== 'GET' || request.headers.has('range') || !url.href.startsWith(scope.registration.scope) || url.href.startsWith(scoped(scope, './downloads/'))) return;
   event.respondWith(Effect.runPromise(url.pathname.endsWith('/build-info.js') ? networkFirst(dependencies, request) : staleWhileRevalidate(dependencies, event, request)));
 };
 

@@ -1,84 +1,81 @@
+import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { BundleBuilder } from 'wbn';
-import { SignedWebBundle, NodeCryptoSigningStrategy, WebBundleId, parsePemKey } from 'wbn-sign';
-import { Effect } from 'effect';
-import { ROOT, IWA_HEADERS, collectHubFiles, readHubManifest, mimeType, toolError, type HubFile } from './hub-files.js';
-import { buildInfo, buildInfoModule, type BuildInfo } from './build-info.js';
+import { Effect, Schema } from 'effect';
+import { buildInfo, type BuildInfo } from './build-info.js';
+import { ROOT, toolError, walkFiles } from './hub-files.js';
 
-export const BUNDLE_NAME = 'i6-share-hub.swbn';
-export interface HubBuildOptions {
-  readonly hubDir?: string; readonly publicDir?: string; readonly outDir?: string; readonly keyPath?: string;
-  readonly info?: BuildInfo;
-}
-export interface BundleInfo extends BuildInfo { readonly version: string; readonly size: number; readonly webBundleId: string; readonly sha256: string }
-export const lowerHeaders = (headers: Readonly<Record<string, string>>): Record<string, string> =>
-  Object.fromEntries(Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value]));
-export const writeAtomic = (file: string, data: string | Uint8Array): void => {
-  const temporary = `${file}.tmp-${process.pid.toString()}`;
-  fs.writeFileSync(temporary, data);
-  fs.renameSync(temporary, file);
-};
-export const loadOrCreateKey = (keyPath: string, warn: (message: string) => void = console.warn): crypto.KeyObject => {
-  if (!fs.existsSync(keyPath)) {
-    fs.mkdirSync(path.dirname(keyPath), { recursive: true, mode: 0o700 });
-    const { privateKey } = crypto.generateKeyPairSync('ed25519');
-    fs.writeFileSync(keyPath, privateKey.export({ type: 'pkcs8', format: 'pem' }), { mode: 0o600, flag: 'wx' });
-    warn(`Generated NEW hub signing key: ${keyPath}. Back it up: this key determines the app identity.`);
-  }
-  const mode = fs.statSync(keyPath).mode & 0o777;
-  if ((mode & 0o077) !== 0) warn(`Signing key ${keyPath} is readable by others (${mode.toString(8)}); use chmod 600.`);
-  return parsePemKey(fs.readFileSync(keyPath, 'utf8'));
-};
-export const createUnsignedBundle = (files: readonly HubFile[], webBundleId: string, info: BuildInfo): Uint8Array => {
-  const base = `isolated-app://${webBundleId}/`;
-  const headers = lowerHeaders(IWA_HEADERS);
-  const builder = new BundleBuilder('b2');
-  files.filter(({ urlPath }) => urlPath !== '/build-info.js' && !urlPath.endsWith('.map')).forEach(({ urlPath, file }) => {
-    const body = fs.readFileSync(file);
-    const contentHeaders = { 'content-type': mimeType(file), ...headers };
-    if (path.posix.basename(urlPath) === 'index.html') {
-      builder.addExchange(base + urlPath.slice(1), 301, { location: './', ...headers }, '');
-      builder.addExchange(base + urlPath.slice(1, -'index.html'.length), 200, contentHeaders, body);
-    } else builder.addExchange(base + urlPath.slice(1), 200, contentHeaders, body);
+export type RuntimeIdentifier = 'linux-x64' | 'linux-arm64' | 'osx-x64' | 'osx-arm64';
+export type ProcessRunner = (command: string, args: readonly string[], cwd: string) => Promise<void>;
+export const runProcess: ProcessRunner = (command, args, cwd) => new Promise((resolve, reject) => {
+  const child = spawn(command, args, { cwd, stdio: 'inherit' });
+  child.once('error', reject);
+  child.once('exit', (code, signal) => {
+    if (code === 0) resolve();
+    else reject(new Error(`${command} exited with ${signal ?? String(code)}`));
   });
-  builder.addExchange(`${base}build-info.js`, 200, { 'content-type': mimeType('build-info.js'), ...headers }, buildInfoModule(info));
-  return builder.createBundle();
+});
+export const runtimeIdentifier = (platform: string = process.platform, arch: string = process.arch): RuntimeIdentifier => {
+  if (platform === 'linux' && arch === 'x64') return 'linux-x64';
+  if (platform === 'linux' && arch === 'arm64') return 'linux-arm64';
+  if (platform === 'darwin' && arch === 'x64') return 'osx-x64';
+  if (platform === 'darwin' && arch === 'arm64') return 'osx-arm64';
+  throw new Error(`Unsupported Native AOT host ${platform}/${arch}`);
 };
-export interface SignedBundle {
-  readonly getWebBundleId: () => string;
-  readonly validateSignatures: () => readonly { readonly status: string; readonly isValid?: boolean }[];
-  readonly getSignedWebBundleBytes: () => Uint8Array;
+const Version = Schema.Struct({ version: Schema.String.check(Schema.isPattern(/^\d+(?:\.\d+)*(?![\s\S])/u)) });
+export const readVersion = (root = ROOT): string => {
+  const json: unknown = JSON.parse(fs.readFileSync(path.join(root, 'native/version.json'), 'utf8'));
+  return Schema.decodeUnknownSync(Version)(json).version;
+};
+export interface NativeArtifact {
+  readonly version: string; readonly rid: RuntimeIdentifier; readonly file: string;
+  readonly sha256: string; readonly size: number; readonly commit: string; readonly builtAt: string | null;
 }
-export type BundleSigner = (bytes: Uint8Array, key: crypto.KeyObject) => Promise<SignedBundle>;
-export const signBundle: BundleSigner = (bytes, key) => SignedWebBundle.fromWebBundle(bytes, [new NodeCryptoSigningStrategy(key)]);
-export const validateSignedBundle = (signed: SignedBundle, webBundleId: string): Uint8Array => {
-  if (signed.getWebBundleId() !== webBundleId) throw new Error('Web Bundle ID mismatch');
-  if (signed.validateSignatures().some((result) => result.status !== 'success' || result.isValid !== true)) throw new Error('Signature validation failed');
-  return signed.getSignedWebBundleBytes();
-};
-export const buildHub = (options: HubBuildOptions = {}, signer: BundleSigner = signBundle): Effect.Effect<BundleInfo, Error> => Effect.gen(function* () {
-  const outDir = options.outDir ?? process.env['I6_OUT_DIR'] ?? path.join(ROOT, 'dist/public/hub');
-  const keyPath = options.keyPath ?? process.env['I6_SIGNING_KEY'] ?? path.join(os.homedir(), '.config/i6-share/hub-signing-key.pem');
-  const files = yield* collectHubFiles(options.hubDir ?? process.env['I6_HUB_DIR'], options.publicDir);
-  const manifest = yield* readHubManifest(files);
-  if (!/^\d+(?:\.\d+)*$/.test(manifest.version)) return yield* Effect.fail(new Error('Manifest version must be dot-separated numbers'));
-  const info = options.info ?? (yield* buildInfo(manifest.version));
-  const key = yield* Effect.try({ try: () => loadOrCreateKey(keyPath), catch: toolError });
-  const webBundleId = new WebBundleId(key).serialize();
-  const unsigned = yield* Effect.try({ try: () => createUnsignedBundle(files, webBundleId, info), catch: toolError });
-  const signed = yield* Effect.tryPromise({ try: () => signer(unsigned, key), catch: toolError });
-  return yield* Effect.try({ try: () => {
-    const bytes = validateSignedBundle(signed, webBundleId);
-    const result: BundleInfo = { ...info, version: manifest.version, size: bytes.byteLength, webBundleId,
-      sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
-    };
+export interface NativeBuildOptions {
+  readonly root?: string; readonly rid?: RuntimeIdentifier; readonly hostRid?: RuntimeIdentifier;
+  readonly outDir?: string; readonly webRoot?: string; readonly info?: BuildInfo;
+}
+
+/** Native AOT compilation takes place on the target OS and architecture, never a JIT fallback. */
+export const buildHub = (options: NativeBuildOptions = {}, run: ProcessRunner = runProcess): Effect.Effect<NativeArtifact, Error> => Effect.gen(function* () {
+  const root = options.root ?? ROOT;
+  const hostRid = options.hostRid ?? runtimeIdentifier();
+  const rid = options.rid ?? hostRid;
+  if (rid !== hostRid) return yield* Effect.fail(new Error(`Native AOT must be built on the target runner (${rid} requested on ${hostRid})`));
+  const version = yield* Effect.try({ try: () => readVersion(root), catch: toolError });
+  const info = options.info ?? (yield* buildInfo(version));
+  const outDir = options.outDir ?? path.join(root, 'dist/public/downloads');
+  const publishDir = path.join(root, 'dist/native', rid);
+  const webRoot = options.webRoot ?? path.join(root, 'dist/hub');
+  yield* Effect.try({ try: () => {
+    if (!fs.existsSync(path.join(webRoot, 'index.html'))) throw new Error(`Build the dashboard before publishing: ${webRoot}`);
+    fs.rmSync(publishDir, { recursive: true, force: true });
     fs.mkdirSync(outDir, { recursive: true });
-    writeAtomic(path.join(outDir, BUNDLE_NAME), bytes);
-    writeAtomic(path.join(outDir, 'version.json'), `${JSON.stringify(result, null, 2)}\n`);
-    writeAtomic(path.join(outDir, 'update.json'), `${JSON.stringify({ versions: [{ version: manifest.version, src: BUNDLE_NAME }] }, null, 2)}\n`);
-    return result;
+  }, catch: toolError });
+  yield* Effect.tryPromise({ try: () => run('dotnet', [
+    'publish', path.join(root, 'native/I6Share.Hub/I6Share.Hub.csproj'), '-warnaserror', '-c', 'Release', '-r', rid,
+    '--self-contained', 'true', '-p:PublishAot=true', `-p:Version=${version}`, '-o', publishDir,
+  ], root), catch: toolError });
+  yield* Effect.try({ try: () => {
+    if (!fs.statSync(path.join(publishDir, 'i6-share-hub')).isFile()) throw new Error('Native publish did not produce i6-share-hub');
+    for (const { file, urlPath } of walkFiles(webRoot).filter((entry) => !entry.urlPath.endsWith('.map'))) {
+      const destination = path.join(publishDir, 'wwwroot', urlPath);
+      fs.mkdirSync(path.dirname(destination), { recursive: true });
+      fs.copyFileSync(file, destination);
+    }
+  }, catch: toolError });
+  const file = `i6-share-hub-${rid}.tar.gz`;
+  const archive = path.join(outDir, file);
+  yield* Effect.tryPromise({ try: () => run('tar', ['-czf', archive, '-C', publishDir, 'i6-share-hub', 'wwwroot'], root), catch: toolError });
+  return yield* Effect.try({ try: () => {
+    const bytes = fs.readFileSync(archive);
+    const artifact: NativeArtifact = { version, rid, file, size: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex'), commit: info.commit, builtAt: info.builtAt };
+    fs.writeFileSync(path.join(outDir, `${rid}.json`), `${JSON.stringify(artifact, null, 2)}\n`);
+    fs.writeFileSync(`${archive}.sha256`, `${artifact.sha256}  ${file}\n`);
+    return artifact;
   }, catch: toolError });
 });
+
+export const runHub = (root = ROOT, run: ProcessRunner = runProcess): Effect.Effect<void, Error> =>
+  Effect.tryPromise({ try: () => run('dotnet', ['run', '--project', path.join(root, 'native/I6Share.Hub'), '--', '--web-root', path.join(root, 'dist/hub')], root), catch: toolError });

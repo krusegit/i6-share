@@ -18,14 +18,14 @@ const pendingResponse = (signal: AbortSignal | null): Promise<Response> => new P
   if (signal?.aborted === true) reject(new Error('aborted'));
   else signal?.addEventListener('abort', () => { reject(new Error('aborted')); }, { once: true });
 });
-const success: Responder = ({ op, json, binary }) => ({ json: op === 'offer' ? { received: [] } : op === 'put' ? { bytes: Number(json['offset']) + binary.length } : { ok: true } });
+const success: Responder = ({ op, json, binary }) => ({ json: op === 'offer' ? { received: [] } : op === 'put' ? { bytes: Number(json['offset']) + binary.length } : op === 'sync' ? { name: 'Computer', addrs: ['127.0.0.1'], outbox: [] } : { ok: true } });
 const fixture = async (respond: Responder = success, options: { readonly queue?: ClientStore; readonly kv?: ClientStore; readonly hubs?: ClientStore; readonly hello?: () => unknown; readonly visible?: boolean } = {}) => {
   const calls: RequestData[] = [];
   const key = await protocol.deviceKey(protocol.unb64url(secret), deviceId);
   const fetch: Fetch = async (input, init) => {
     const request = new Request(input, init);
     const url = new URL(request.url);
-    if (url.pathname === '/i6/hello') return Response.json(options.hello?.() ?? { app: 'i6-share-hub', id: hubId, name: 'Computer', addrs: ['127.0.0.1'] });
+    if (url.pathname === '/i6/hello') return Response.json(options.hello?.() ?? { app: 'i6-share-hub', v: 1, port: 47616, id: hubId, name: 'Computer', addrs: ['127.0.0.1'] });
     const op = url.pathname.slice('/i6/'.length);
     const envelope = await protocol.open(key, protocol.requestAad(op, deviceId), await request.arrayBuffer());
     const data: RequestData = { op, json: envelope.json, binary: envelope.binary, signal: request.signal };
@@ -131,7 +131,7 @@ describe('functional share engine', () => {
     let ends = 0;
     const { engine, calls } = await fixture((request) => {
       if (request.op === 'offer') { offers += 1; return { json: { received: offers === 1 ? [2] : [4] } }; }
-      if (request.op === 'put') { puts += 1; if (puts === 1) return Response.json({ error: 'busy' }, { status: 503 }); return { json: {} }; }
+      if (request.op === 'put') { puts += 1; if (puts === 1) return Response.json({ error: 'busy' }, { status: 503 }); return { json: { bytes: 4 } }; }
       if (request.op === 'end') { ends += 1; return { json: { ok: ends > 1 } }; }
       return success(request);
     });
@@ -193,6 +193,18 @@ describe('functional share engine', () => {
     expect(engine.transfers[0]?.status).toBe('cancelled');
   });
 
+  test('forgetting a hub preserves completed transfer history and other-hub queued work', async () => {
+    const queue = memoryStore([['other', { tid: 'other', hubId: 'another', files: [new File(['other'], 'other')] }]]);
+    const { engine } = await fixture(success, { queue });
+    const done = finished(engine);
+    const tid = await engine.send(hubId, [new File(['complete'], 'complete')]);
+    await done;
+    await engine.forget(hubId);
+    expect(engine.hubs).toHaveLength(0);
+    expect(engine.transfers.find((transfer) => transfer.tid === tid)?.status).toBe('done');
+    expect(engine.transfers.find((transfer) => transfer.tid === 'other')?.status).toBe('queued');
+  });
+
   test('downloads file chunks, changed sizes and zero-length files, acknowledging once', async () => {
     let syncs = 0;
     const tid = 'incoming';
@@ -218,8 +230,8 @@ describe('functional share engine', () => {
     vi.spyOn(protocol, 'sleep').mockResolvedValue();
     let syncs = 0;
     const { engine, calls } = await fixture((request) => {
-      if (request.op === 'sync') { syncs += 1; return syncs === 1 ? { json: { outbox: [{ tid: 'empty-chunk', files: [{ name: 'a', size: 1, type: '', lastModified: 0 }] }] } } : pendingResponse(request.signal); }
-      return { json: {} };
+      if (request.op === 'sync') { syncs += 1; return syncs === 1 ? { json: { name: 'Computer', addrs: ['127.0.0.1'], outbox: [{ tid: 'empty-chunk', files: [{ name: 'a', size: 1, type: '', lastModified: 0 }] }] } } : pendingResponse(request.signal); }
+      return request.op === 'pull' ? { json: { size: 1 } } : success(request);
     });
     engine.setVisible(true);
     await vi.waitFor(() => { expect(calls.some((request) => request.op === 'pull')).toBe(true); });
@@ -227,7 +239,7 @@ describe('functional share engine', () => {
   });
 
   test('server shrinking a file to zero ends the download safely', async () => {
-    const { engine } = await fixture((request) => request.op === 'sync' ? { json: { outbox: [{ tid: 'shrunk', files: [{ name: 'a', size: 1, type: '', lastModified: 0 }] }] } } : { json: { size: 0 } });
+    const { engine } = await fixture((request) => request.op === 'sync' ? { json: { name: 'Computer', addrs: ['127.0.0.1'], outbox: [{ tid: 'shrunk', files: [{ name: 'a', size: 1, type: '', lastModified: 0 }] }] } } : request.op === 'pull' ? { json: { size: 0 } } : success(request));
     const downloaded = event(engine, 'file', () => true);
     engine.setVisible(true);
     expect((await downloaded).file.size).toBe(0);
@@ -274,8 +286,8 @@ describe('transfer recovery boundaries', () => {
     let syncs = 0;
     const kv = memoryStore([['deviceId', deviceId], ['pulledTids', Array.from({ length: 100 }, (_, index) => String(index))]]);
     const { engine, calls } = await fixture((request) => {
-      if (request.op === 'sync') { syncs += 1; return syncs === 1 ? { json: { outbox: [{ tid: '', files: [] }, { tid: '99', files: [] }, { tid: '100', files: [] }] } } : pendingResponse(request.signal); }
-      return { json: {} };
+      if (request.op === 'sync') { syncs += 1; return syncs === 1 ? { json: { name: 'Computer', addrs: ['127.0.0.1'], outbox: [{ tid: '', files: [] }, { tid: '99', files: [] }, { tid: '100', files: [] }] } } : pendingResponse(request.signal); }
+      return request.op === 'pull' ? { json: { size: 1 } } : success(request);
     }, { kv });
     const done = event(engine, 'incoming', (received) => received.tid === '100' && received.status === 'done');
     engine.setVisible(true);
@@ -290,8 +302,8 @@ describe('transfer recovery boundaries', () => {
     const base = memoryStore([['deviceId', deviceId]]);
     const kv: ClientStore = { ...base, put: (key, value) => key === 'pulledTids' ? Promise.reject(new Error('full')) : base.put(key, value) };
     const { engine, calls } = await fixture((request) => {
-      if (request.op === 'sync') { syncs += 1; return syncs === 1 ? { json: { outbox: [{ tid: 'saved', files: [] }] } } : pendingResponse(request.signal); }
-      return { json: {} };
+      if (request.op === 'sync') { syncs += 1; return syncs === 1 ? { json: { name: 'Computer', addrs: ['127.0.0.1'], outbox: [{ tid: 'saved', files: [] }] } } : pendingResponse(request.signal); }
+      return request.op === 'pull' ? { json: { size: 1 } } : success(request);
     }, { kv });
     const done = event(engine, 'incoming', (received) => received.status === 'done');
     engine.setVisible(true);
@@ -302,7 +314,7 @@ describe('transfer recovery boundaries', () => {
   test('unpair during a download stops receiving and leaves other-hub jobs intact', async () => {
     const queue = memoryStore([['other', { tid: 'other', hubId: 'other', files: [] }]]);
     const { engine } = await fixture((request) => request.op === 'sync'
-      ? { json: { outbox: [{ tid: 'receiving', files: [{ name: 'x', size: 1, type: '', lastModified: 1 }] }] } }
+      ? { json: { name: 'Computer', addrs: ['127.0.0.1'], outbox: [{ tid: 'receiving', files: [{ name: 'x', size: 1, type: '', lastModified: 1 }] }] } }
       : Response.json({}, { status: 401 }), { queue });
     const unpaired = event(engine, 'unpaired', () => true);
     engine.setVisible(true);
@@ -311,9 +323,9 @@ describe('transfer recovery boundaries', () => {
   });
 });
 
-test('stored names win over guesses and offers without resume data start at zero', async () => {
+test('stored names win over guesses and offers with an empty resume vector start at zero', async () => {
   const kv = memoryStore([['deviceId', deviceId], ['deviceName', 'Stored phone']]);
-  const { engine } = await fixture((request) => request.op === 'offer' ? { json: {} } : success(request), { kv });
+  const { engine } = await fixture((request) => request.op === 'offer' ? { json: { received: [] } } : success(request), { kv });
   expect(engine.deviceName).toBe('Stored phone');
   const done = finished(engine);
   await engine.send(hubId, [new File(['x'], 'x')]);
@@ -330,7 +342,7 @@ test('pairing reports browser blocking, persists trust, replaces an existing hub
     if (new URL(request.url).pathname === '/i6/hello') {
       hellos += 1;
       if (hellos === 1) throw new TypeError('blocked');
-      return Response.json({ app: 'i6-share-hub', id: hubId, name: 'Computer', addrs: ['127.0.0.1'] });
+      return Response.json({ app: 'i6-share-hub', v: 1, port: 47616, id: hubId, name: 'Computer', addrs: ['127.0.0.1'] });
     }
     const body = new Uint8Array(await request.arrayBuffer());
     const reply = await protocol.seal(key, protocol.responseAad('pair', body.slice(0, 12)), { secret, hubId, name: 'Paired Computer' });

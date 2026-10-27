@@ -1,7 +1,9 @@
 import { Effect, Ref, Schema } from 'effect';
+import { ErrorResponseSchema, HelloResponseSchema, PairResponseSchema, WireResponseDecoders } from './generated/contracts.js';
+import type { PairResponse } from './generated/contracts.js';
 import type { PairPayload } from './lib/proto.js';
 import { runEffect } from './lib/runtime.js';
-import type { ClientStore, Fetch, HubRecord, EngineRuntime, HubRuntime, ShareEngine, HubClient, ShareOptions, ClientEvents, Transfer, QueueRecord, IncomingTransfer, Hello, WireResponse, PairIdentity, PairInput, PairOptions, InitOptions, IncomingState } from './client-types.js';
+import type { ClientStore, Fetch, HubRecord, EngineRuntime, HubRuntime, ShareEngine, HubClient, ShareOptions, ClientEvents, Transfer, QueueRecord, IncomingTransfer, Hello, PairIdentity, PairInput, PairOptions, InitOptions, IncomingState } from './client-types.js';
 export type { ShareEngine, HubClient, HubRecord, TransferSnapshot, IncomingTransfer, ClientEvents } from './client-types.js';
 import {
   PORT, CHUNK_SIZE, SYNC_WAIT_MS, createBackoff, sleep, seal, open, pairKey, deviceKey,
@@ -11,19 +13,14 @@ import {
 
 const UserAgentSchema = Schema.Struct({ platform: Schema.optional(Schema.String) });
 const ModelSchema = Schema.Struct({ model: Schema.optional(Schema.String) });
-const HelloSchema = Schema.Struct({ app: Schema.Literal('i6-share-hub'), id: Schema.String, name: Schema.String, addrs: Schema.Array(Schema.String) });
-const MetaSchema = Schema.Struct({ name: Schema.String, size: Schema.Number, type: Schema.String, lastModified: Schema.Number });
-const WireSchema = Schema.Struct({
-  secret: Schema.optional(Schema.String), hubId: Schema.optional(Schema.String), name: Schema.optional(Schema.String),
-  addrs: Schema.optional(Schema.Array(Schema.String)), outbox: Schema.optional(Schema.Array(Schema.Struct({ tid: Schema.String, files: Schema.Array(MetaSchema) }))),
-  size: Schema.optional(Schema.Number), received: Schema.optional(Schema.Array(Schema.Number)), ok: Schema.optional(Schema.Boolean),
-  bytes: Schema.optional(Schema.Number), error: Schema.optional(Schema.String),
-});
 const HubSchema = Schema.Struct({ hubId: Schema.String, name: Schema.String, port: Schema.Number, addrs: Schema.Array(Schema.String), lastAddr: Schema.String, secret: Schema.String, pairedAt: Schema.Number, lastSeen: Schema.Number });
 const QueueSchema = Schema.Struct({ tid: Schema.String, hubId: Schema.String, files: Schema.Array(Schema.instanceOf(File)), names: Schema.optional(Schema.Array(Schema.String)), total: Schema.optional(Schema.Number), createdAt: Schema.optional(Schema.Number), failed: Schema.optional(Schema.Array(Schema.Number)), status: Schema.optional(Schema.String) });
-const readError = async (response: Response): Promise<{ readonly error?: string | undefined }> => Schema.decodeUnknownSync(Schema.Struct({ error: Schema.optional(Schema.String) }))(await response.json().catch(() => ({})));
+const readError = async (response: Response): Promise<string> => {
+  const decoded = Schema.decodeUnknownOption(ErrorResponseSchema)(await response.json().catch(() => ({})));
+  return decoded._tag === 'Some' ? decoded.value.error : '';
+};
 
-export const APP_VERSION = '1.0.4';
+export const APP_VERSION = '1.1.0';
 
 const HELLO_TIMEOUT = 4000;         // direct liveness check
 const SWEEP_TIMEOUT = 1500;         // per address while sweeping a /24
@@ -110,7 +107,7 @@ export async function guessDevice() {
 // ---------------------------------------------------------------- discovery
 
 /** GET /i6/hello on one address. Resolves with the hello JSON or throws NetError. */
-export async function hello(addr: string, port = PORT, { timeout = HELLO_TIMEOUT, signal, fetch = defaultFetch }: { readonly timeout?: number; readonly signal?: AbortSignal | undefined; readonly fetch?: Fetch | undefined } = {}): Promise<Hello> {
+export async function hello(addr: string, port: number = PORT, { timeout = HELLO_TIMEOUT, signal, fetch = defaultFetch }: { readonly timeout?: number; readonly signal?: AbortSignal | undefined; readonly fetch?: Fetch | undefined } = {}): Promise<Hello> {
   const t0 = Date.now();
   try {
     const res = await fetchEffect(fetch, `${baseUrl(addr, port)}/i6/hello`, {
@@ -118,7 +115,7 @@ export async function hello(addr: string, port = PORT, { timeout = HELLO_TIMEOUT
       signal: anySignal(AbortSignal.timeout(timeout), signal),
     });
     if (!res.ok) throw HttpError(res.status);
-    const j = Schema.decodeUnknownSync(HelloSchema)(await res.json());
+    const j = Schema.decodeUnknownSync(HelloResponseSchema)(await res.json());
     return j;
   } catch (err) {
     if (signal?.aborted === true) throw AbortedError();
@@ -194,7 +191,7 @@ export async function locateHub({ hubId, port = PORT, addrs = [], lastAddr }: { 
 
 // ---------------------------------------------------------------- pairing
 
-async function pairAt(addr: string, p: PairPayload, { deviceId, name, os, fetch = defaultFetch, signal }: PairIdentity): Promise<WireResponse & { readonly secret: string }> {
+async function pairAt(addr: string, p: PairPayload, { deviceId, name, os, fetch = defaultFetch, signal }: PairIdentity): Promise<PairResponse> {
   const key = await pairKey(p.token, p.hubId);
   const { body, iv } = await seal(key, requestAad('pair', 'pair'), { deviceId, name, os });
   let res: Response; let buf: ArrayBuffer | null;
@@ -211,11 +208,11 @@ async function pairAt(addr: string, p: PairPayload, { deviceId, name, os, fetch 
   }
   if (!buf) {
     const err = await readError(res);
-    throw HttpError(res.status, err.error ?? '');
+    throw HttpError(res.status, err);
   }
-  let json: WireResponse | null;
-  try { json = Schema.decodeUnknownSync(WireSchema)((await open(key, responseAad('pair', iv), buf)).json); } catch { json = null; }
-  if (json?.secret === undefined || json.secret.length === 0 || (json.hubId !== undefined && json.hubId !== p.hubId)) throw PairError('bad-response', 'The computer sent an invalid pairing response.');
+  let json: PairResponse | null;
+  try { json = Schema.decodeUnknownSync(PairResponseSchema)((await open(key, responseAad('pair', iv), buf)).json); } catch { json = null; }
+  if (json === null || json.secret.length === 0 || json.hubId !== p.hubId) throw PairError('bad-response', 'The computer sent an invalid pairing response.');
   return { ...json, secret: json.secret };
 }
 
@@ -316,11 +313,11 @@ function createHubClient(engine: EngineRuntime, rec: HubRecord): HubRuntime {
 
   /** Merge addresses / name learnt from hello or sync. */
   _learn(addrs, addr, name) {
-    const next = unique([addr, ...(addrs ?? []), ...self.rec.addrs]).slice(0, 8);
+    const next = unique([addr, ...addrs, ...self.rec.addrs]).slice(0, 8);
     let changed = next.join() !== self.rec.addrs.join() || (addr !== null && addr !== self.rec.lastAddr);
     self.update({ rec: { ...self.rec, addrs: next } });
     if (addr !== null) self.update({ rec: { ...self.rec, lastAddr: addr } });
-    if (name !== undefined && name.length > 0 && name !== self.rec.name) {
+    if (name.length > 0 && name !== self.rec.name) {
       self.update({ rec: { ...self.rec, name: name.slice(0, 60) } });
       changed = true;
       self.engine._emit('hubs', {});
@@ -384,11 +381,11 @@ function createHubClient(engine: EngineRuntime, rec: HubRecord): HubRuntime {
       throw NetError(`${op} ${addr}: ${errorMessage(err)}`, err);
     }
     if (buf) {
-      try { const opened = await open(key, responseAad(op, iv), buf); return { ...opened, json: Schema.decodeUnknownSync(WireSchema)(opened.json) }; } catch (err) { throw NetError(`${op} ${addr}: undecryptable response`, err); }
+      try { const opened = await open(key, responseAad(op, iv), buf); return { ...opened, json: WireResponseDecoders[op](opened.json) }; } catch (err) { throw NetError(`${op} ${addr}: undecryptable response`, err); }
     }
     const err = await readError(res);
-    if (res.status === 401) await self._checkUnpaired(addr, err.error ?? '');
-    throw HttpError(res.status, err.error ?? '');
+    if (res.status === 401) await self._checkUnpaired(addr, err);
+    throw HttpError(res.status, err);
   },
 
   /** A 401 only counts if the hub at that address really is ours (not some other hub after a DHCP shuffle). */
@@ -448,7 +445,7 @@ function createHubClient(engine: EngineRuntime, rec: HubRecord): HubRuntime {
             { timeout: SYNC_WAIT_MS + 10000, signal: ctl.signal });
           self.syncBackoff.reset();
           self._learn(json.addrs, self.addr, json.name);
-          const outbox = json.outbox ?? [];
+          const outbox = json.outbox;
           const ok = await self._receive(outbox);
           if (!ok) await self._nap(self.syncBackoff.next());
           else if (!outbox.length && Date.now() - t0 < 1000) await self._nap(1000);  // never spin
@@ -492,7 +489,7 @@ function createHubClient(engine: EngineRuntime, rec: HubRecord): HubRuntime {
             const length = Math.min(CHUNK_SIZE, size - pos);
             const { json, binary } = await self.callRetry('pull', { tid, i, offset: pos, length }, null,
               { timeout: DATA_TIMEOUT, backoff: self.syncBackoff });
-            if (json.size !== undefined && Number.isFinite(json.size)) size = json.size;
+            size = json.size;
             const chunk = binary.subarray(0, Math.max(0, Math.min(length, size - pos)));
             if (!chunk.byteLength) { if (pos >= size) break; throw HttpError(502, 'empty-chunk'); }
             parts.push(new Blob([chunk]));   // copy out of the decrypted buffer
@@ -537,7 +534,7 @@ function createHubClient(engine: EngineRuntime, rec: HubRecord): HubRuntime {
       for (;;) {
         try {
           const { json: offer } = await self.callRetry('offer', { tid, files: meta }, null, { signal: sig });
-          const have = offer.received ?? [];
+          const have = offer.received;
           t.update({ acked: meta.map((m, i) => (t.failed.includes(i) ? m.size : Math.min(Number(have[i]) || 0, m.size))) });
           t.update({ error: null });
           t.update({ lastAt: 0 });   // new rate baseline (resumed bytes aren't "speed")
@@ -546,7 +543,7 @@ function createHubClient(engine: EngineRuntime, rec: HubRecord): HubRuntime {
             if (!t.failed.includes(i)) await self._sendFile(t, i, sig, file);
           }
           const { json: end } = await self.callRetry('end', { tid }, null, { signal: sig });
-          if (end.ok === false && !t.failed.length) throw HttpError(409, 'incomplete');
+          if (!end.ok && !t.failed.length) throw HttpError(409, 'incomplete');
           await e._finish(t, t.failed.length ? 'partial' : 'done');
           return;
         } catch (err) {
@@ -577,8 +574,7 @@ function createHubClient(engine: EngineRuntime, rec: HubRecord): HubRuntime {
         return;
       }
       const { json } = await self.callRetry('put', { tid: t.tid, i, offset: pos }, buf, opts);
-      const bytes = Number(json.bytes);
-      pos = Number.isFinite(bytes) ? Math.min(bytes, size) : pos + buf.byteLength;   // {error:'offset'} => jump
+      pos = Math.min(json.bytes, size);   // {error:'offset'} => jump
       t.update({ acked: t.acked.map((acked, index) => index === i ? pos : acked) });
       self.engine._progress(t);
     }

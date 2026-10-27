@@ -16,7 +16,7 @@ export const readGit: GitReader = (...args) => {
 };
 export const buildInfo = (version: string | null = null, git: GitReader = readGit, now: () => Date = () => new Date()): Effect.Effect<BuildInfo> => Effect.sync(() => {
   const commit = git('rev-parse', '--short=7', 'HEAD');
-  const dirty = commit !== '' && git('status', '--porcelain', '--', 'hub', 'public', 'tools', ':!public/hub') !== '';
+  const dirty = commit !== '' && git('status', '--porcelain', '--', 'hub', 'public', 'tools', 'native', ':!public/hub') !== '';
   return {
     version, commit: commit === '' ? 'dev' : `${commit}${dirty ? '-dirty' : ''}`,
     committedAt: git('log', '-1', '--format=%cI') || null, builtAt: now().toISOString(),

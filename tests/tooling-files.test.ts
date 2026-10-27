@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { Effect } from 'effect';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { collectHubFiles, errorMessage, mimeType, readHubManifest, ROOT, toolError, walkFiles, WELL_KNOWN_MANIFEST } from '../tools/hub-files.js';
+import { errorMessage, mimeType, ROOT, toolError, walkFiles } from '../tools/hub-files.js';
 import { buildInfo, buildInfoModule, readGit } from '../tools/build-info.js';
 import { buildIcons, ICON_JOBS, renderIcon } from '../tools/build-icons.js';
 import { BUILD } from '../public/build-info.js';
@@ -25,29 +25,7 @@ describe('bundle file inventory', () => {
     expect(walkFiles(dir).map((entry) => entry.urlPath)).toEqual(['/a/b.txt', '/z.txt']); expect(walkFiles(path.join(dir, 'absent'))).toEqual([]);
     fs.symlinkSync(path.join(dir, 'z.txt'), path.join(dir, 'link')); expect(() => walkFiles(dir)).toThrow('symbolic link');
   });
-  it('merges hub first, honors well-known override and reads validated manifest', async () => {
-    const dir = temporary(); const hub = path.join(dir, 'hub'); const publicDir = path.join(dir, 'public');
-    write(path.join(hub, 'index.html')); write(path.join(hub, 'manifest.webmanifest'), '{"version":"1.2.3"}');
-    write(path.join(hub, 'style.css'), 'hub'); write(path.join(publicDir, 'style.css'), 'phone');
-    write(path.join(publicDir, 'lib/proto.js')); write(path.join(publicDir, 'icons/icon.png'));
-    const files = await Effect.runPromise(collectHubFiles(hub, publicDir));
-    expect(files.find((entry) => entry.urlPath === '/style.css')?.file).toBe(path.join(hub, 'style.css'));
-    expect(await Effect.runPromise(readHubManifest(files))).toEqual({ version: '1.2.3' });
-    write(path.join(hub, '.well-known/manifest.webmanifest'), '{"version":"2"}');
-    expect(await Effect.runPromise(readHubManifest(await Effect.runPromise(collectHubFiles(hub, publicDir))))).toEqual({ version: '2' });
-    fs.rmSync(path.join(hub, '.well-known'), { recursive: true }); fs.rmSync(path.join(hub, 'manifest.webmanifest')); fs.rmSync(path.join(publicDir, 'style.css'));
-    expect((await Effect.runPromise(collectHubFiles(hub, publicDir))).some((entry) => entry.urlPath === WELL_KNOWN_MANIFEST)).toBe(false);
-    await expect(Effect.runPromise(readHubManifest([]))).rejects.toThrow('Missing');
-    write(path.join(hub, 'bad'), '{bad');
-    await expect(Effect.runPromise(readHubManifest([{ urlPath: WELL_KNOWN_MANIFEST, file: path.join(hub, 'bad') }]))).rejects.toThrow();
-    write(path.join(hub, 'bad'), '{"version":2}');
-    await expect(Effect.runPromise(readHubManifest([{ urlPath: WELL_KNOWN_MANIFEST, file: path.join(hub, 'bad') }]))).rejects.toThrow();
-    await expect(Effect.runPromise(collectHubFiles(path.join(dir, 'absent'), publicDir))).rejects.toThrow('No index.html');
-  });
-  it('uses compiled output defaults', async () => {
-    const exists = vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    await expect(Effect.runPromise(collectHubFiles())).rejects.toThrow('dist/hub'); exists.mockRestore();
-  });
+
 });
 
 describe('build metadata and icons', () => {

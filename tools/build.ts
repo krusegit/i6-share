@@ -10,7 +10,7 @@ export type BrowserBundler = (options: BuildOptions) => Promise<unknown>;
 export const bundleBrowser: BrowserBundler = bundle;
 const phoneEntries = ['app', 'client', 'sw', 'setup/setup', 'lib/proto', 'lib/dom', 'lib/store'];
 export const copyStatic = (source: string, destination: string): void => {
-  walkFiles(source).filter(({ urlPath }) => !/\.(?:[cm]?js|ts|map)$/.test(urlPath) && !urlPath.startsWith('/hub/'))
+  walkFiles(source).filter(({ urlPath }) => !/\.(?:[cm]?js|ts|map)$/.test(urlPath) && !/^\/(?:hub|downloads)\//.test(urlPath))
     .forEach(({ urlPath, file }) => {
       const output = path.join(destination, urlPath);
       fs.mkdirSync(path.dirname(output), { recursive: true });
@@ -25,8 +25,12 @@ export const buildSite = (options: BuildOptionsInput = {}, bundler: BrowserBundl
   const info = options.info ?? (yield* buildInfo());
   yield* Effect.try({ try: () => {
     fs.mkdirSync(outDir, { recursive: true });
+    fs.rmSync(path.join(outDir, 'hub'), { recursive: true, force: true });
+    fs.rmSync(path.join(outDir, 'public/hub'), { recursive: true, force: true });
     copyStatic(path.join(root, 'public'), path.join(outDir, 'public'));
     copyStatic(path.join(root, 'hub'), path.join(outDir, 'hub'));
+    fs.copyFileSync(path.join(root, 'public/style.css'), path.join(outDir, 'hub/style.css'));
+    copyStatic(path.join(root, 'public/icons'), path.join(outDir, 'hub/icons'));
   }, catch: toolError });
   const common: BuildOptions = {
     bundle: true, format: 'esm', platform: 'browser', target: 'es2022', sourcemap: true,
